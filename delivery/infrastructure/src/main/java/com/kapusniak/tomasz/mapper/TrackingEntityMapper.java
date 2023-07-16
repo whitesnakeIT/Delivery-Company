@@ -7,7 +7,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.NullValueCheckStrategy;
 
 @Mapper(
-        componentModel = "spring"
+        componentModel = "spring",
+        uses = {
+                UuidMapper.class
+        }
 )
 public interface TrackingEntityMapper {
 

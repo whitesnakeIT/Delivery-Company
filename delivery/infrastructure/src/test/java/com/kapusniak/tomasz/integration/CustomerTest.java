@@ -73,7 +73,7 @@ public class CustomerTest {
 
         Order order = orderService.findByUuid(ORDER_UUID_1);
 
-        customer.addOrdersItem(order);
+        customer.addOrdersItem(ORDER_UUID_1);
 
 
         return customer;

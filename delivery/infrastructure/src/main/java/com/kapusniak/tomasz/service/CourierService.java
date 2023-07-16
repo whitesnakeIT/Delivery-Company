@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CourierService {
+public class CourierService implements BaseEntityService<CourierEntity> {
 
     private final CourierJpaRepository courierRepository;
 
@@ -95,4 +95,16 @@ public class CourierService {
         }
         return newCourier;
     }
+
+    @Override
+    public CourierEntity convertUuidToEntity(UUID uuid) {
+        return courierRepository.findByUuid(uuid).orElseThrow();
+
+    }
+
+    @Override
+    public List<CourierEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return courierRepository.findAllByUuidIn(uuidList);
+    }
+
 }

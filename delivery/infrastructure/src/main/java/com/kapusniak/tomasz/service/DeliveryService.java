@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class DeliveryService {
+public class DeliveryService implements BaseEntityService<DeliveryEntity> {
 
     private final DeliveryJpaRepository deliveryRepository;
 
@@ -121,6 +121,17 @@ public class DeliveryService {
                 .stream()
                 .map(deliveryEntityMapper::mapToApiModel)
                 .toList();
+    }
+
+    @Override
+    public DeliveryEntity convertUuidToEntity(UUID uuid) {
+        return deliveryRepository.findByUuid(uuid).orElseThrow();
+
+    }
+
+    @Override
+    public List<DeliveryEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return deliveryRepository.findAllByUuidIn(uuidList);
     }
 
 }

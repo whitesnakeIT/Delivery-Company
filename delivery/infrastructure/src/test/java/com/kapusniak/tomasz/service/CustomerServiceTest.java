@@ -4,7 +4,6 @@ import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.mapper.CustomerEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Customer;
-import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.repository.jpa.CustomerJpaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -323,8 +322,8 @@ class CustomerServiceTest {
         assertThat(updatedCustomer.getLastName()).isEqualTo(changedCustomer.getLastName());
         assertThat(updatedCustomer.getEmail()).isEqualTo(changedCustomer.getEmail());
 
-        assertThat(updatedCustomer.getOrders().get(1).getUuid()).isEqualTo(changedCustomer.getOrders().get(1).getUuid());
-        assertThat(updatedCustomer.getOrders().get(1).getUuid()).isEqualTo(changedCustomer.getOrders().get(1).getUuid());
+        assertThat(updatedCustomer.getOrders().get(1)).isEqualTo(changedCustomer.getOrders().get(1));
+        assertThat(updatedCustomer.getOrders().get(1)).isEqualTo(changedCustomer.getOrders().get(1));
 
         // verify
         then(customerRepository)
@@ -346,12 +345,7 @@ class CustomerServiceTest {
         changedCustomer.setLastName(newLastName);
         changedCustomer.setEmail(newEmail);
 
-        Order newOrder1 = new Order();
-        newOrder1.setUuid(newOrder1Uuid);
-        Order newOrder2 = new Order();
-        newOrder2.setUuid(newOrder2Uuid);
-
-        changedCustomer.setOrders(List.of(newOrder1, newOrder2));
+        changedCustomer.setOrders(List.of(newOrder1Uuid, newOrder2Uuid));
 
         return changedCustomer;
     }

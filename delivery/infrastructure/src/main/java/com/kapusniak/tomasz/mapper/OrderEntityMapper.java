@@ -2,17 +2,23 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.Order;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValueCheckStrategy;
+import com.kapusniak.tomasz.service.CustomerService;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
-@Mapper(componentModel = "spring")
-public interface OrderEntityMapper {
+import java.util.UUID;
 
-    @Mapping(
-            target = "customer.orders",
-            expression = "java(null)"
-    )
+@Mapper(
+        componentModel = "spring",
+        uses = {
+                UuidMapper.class
+        }
+)
+public abstract class OrderEntityMapper {
+
+    @Autowired
+    private CustomerService customerService;
+
     @Mapping(
             target = "uuid",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
@@ -21,12 +27,17 @@ public interface OrderEntityMapper {
             target = "version",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
     )
-    OrderEntity mapToEntity(Order order);
-
     @Mapping(
-            target = "customer.orders",
+            target = "customer",
             ignore = true
     )
-    Order mapToApiModel(OrderEntity orderEntity);
+    public abstract OrderEntity mapToEntity(Order order);
 
+    public abstract Order mapToApiModel(OrderEntity orderEntity);
+
+    @AfterMapping
+    public void convertUuidToCustomerEntity(@MappingTarget OrderEntity orderEntity, Order order) {
+        UUID customer = order.getCustomer();
+        orderEntity.setCustomer(customerService.convertUuidToEntity(customer));
+    }
 }

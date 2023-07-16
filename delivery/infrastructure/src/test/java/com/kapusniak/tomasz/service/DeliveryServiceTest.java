@@ -4,10 +4,8 @@ import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.mapper.DeliveryEntityMapper;
-import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
-import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -336,8 +334,8 @@ class DeliveryServiceTest {
         assertThat(updatedDelivery.getPrice()).isEqualTo(changedDelivery.getPrice());
         assertThat(updatedDelivery.getDeliveryStatus()).isEqualTo(changedDelivery.getDeliveryStatus());
 
-        assertThat(updatedDelivery.getOrder().getUuid()).isEqualTo(changedDelivery.getOrder().getUuid());
-        assertThat(updatedDelivery.getCourier().getUuid()).isEqualTo(changedDelivery.getCourier().getUuid());
+        assertThat(updatedDelivery.getOrder()).isEqualTo(changedDelivery.getOrder());
+        assertThat(updatedDelivery.getCourier()).isEqualTo(changedDelivery.getCourier());
 
         // verify
         then(deliveryRepository)
@@ -364,16 +362,9 @@ class DeliveryServiceTest {
         changedDelivery.setDeliveryStatus(newDeliveryStatus);
         changedDelivery.setUuid(deliveryUuid);
 
-        Order newOrder = new Order();
-        newOrder.setId(newOrderId);
-        newOrder.setUuid(newOrderUuid);
 
-        Courier newCourier = new Courier();
-        newCourier.setId(newCourierId);
-        newCourier.setUuid(newCourierUuid);
-
-        changedDelivery.setOrder(newOrder);
-        changedDelivery.setCourier(newCourier);
+        changedDelivery.setOrder(newOrderUuid);
+        changedDelivery.setCourier(newCourierUuid);
 
         return changedDelivery;
     }

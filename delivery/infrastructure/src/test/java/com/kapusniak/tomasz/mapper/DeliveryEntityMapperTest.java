@@ -4,11 +4,17 @@ import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
-import com.kapusniak.tomasz.openapi.model.*;
+import com.kapusniak.tomasz.openapi.model.Delivery;
+import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
+import com.kapusniak.tomasz.openapi.model.PackageSize;
+import com.kapusniak.tomasz.openapi.model.PackageType;
+import com.kapusniak.tomasz.service.CourierService;
+import com.kapusniak.tomasz.service.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -20,13 +26,25 @@ import java.util.UUID;
 
 import static com.kapusniak.tomasz.openapi.model.CourierCompany.DPD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class DeliveryEntityMapperTest {
 
+    public static final UUID DELIVERY_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    public static final UUID ORDER_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    public static final UUID COURIER_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+
     @Autowired
     private DeliveryEntityMapper deliveryEntityMapper;
+
+    @MockBean
+    private CourierService courierService;
+
+    @MockBean
+    private OrderService orderService;
 
     public Delivery prepareDelivery() {
         LocalDateTime localDeliveryTime =
@@ -38,9 +56,10 @@ class DeliveryEntityMapperTest {
         delivery.setPrice(20.50d);
         delivery.setDeliveryStatus(DeliveryStatus.DELIVERED);
         delivery.setDeliveryTime(offsetDeliveryTime);
-        delivery.setCourier(prepareCourier());
-        delivery.setOrder(prepareOrder());
-        delivery.setUuid(UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f"));
+
+        delivery.setCourier(COURIER_UUID);
+        delivery.setOrder(ORDER_UUID);
+        delivery.setUuid(DELIVERY_UUID);
         delivery.setVersion(0L);
 
         return delivery;
@@ -56,23 +75,10 @@ class DeliveryEntityMapperTest {
         deliveryEntity.setDeliveryTime(localDeliveryTime);
         deliveryEntity.setCourier(prepareCourierEntity());
         deliveryEntity.setOrder(prepareOrderEntity());
-        deliveryEntity.setUuid(UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f"));
+        deliveryEntity.setUuid(DELIVERY_UUID);
         deliveryEntity.setVersion(0L);
 
         return deliveryEntity;
-    }
-
-    public Courier prepareCourier() {
-        Courier courier = new Courier();
-        courier.setId(1L);
-        courier.setFirstName("testFirstName");
-        courier.setLastName("testLastName");
-        courier.setDeliveryList(List.of(new Delivery(), new Delivery()));
-        courier.setCourierCompany(DPD);
-        courier.setUuid(UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f"));
-        courier.setVersion(0L);
-
-        return courier;
     }
 
     public CourierEntity prepareCourierEntity() {
@@ -82,25 +88,10 @@ class DeliveryEntityMapperTest {
         courierEntity.setLastName("testLastName");
         courierEntity.setDeliveryList(List.of(new DeliveryEntity(), new DeliveryEntity()));
         courierEntity.setCourierCompany(DPD);
-        courierEntity.setUuid(UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f"));
+        courierEntity.setUuid(COURIER_UUID);
         courierEntity.setVersion(0L);
 
         return courierEntity;
-    }
-
-    public Order prepareOrder() {
-        Order order = new Order();
-        order.setId(1L);
-        order.setSenderAddress("testSenderAddress");
-        order.setReceiverAddress("testReceiverAddress");
-        order.setPackageType(PackageType.PARCEL);
-        order.setPackageSize(PackageSize.SMALL);
-        Customer customer = new Customer();
-        customer.setOrders(List.of(new Order(), new Order()));
-        order.setCustomer(customer);
-        order.setVersion(0L);
-
-        return order;
     }
 
     public OrderEntity prepareOrderEntity() {
@@ -114,16 +105,23 @@ class DeliveryEntityMapperTest {
         customerEntity.setOrders(List.of(new OrderEntity(), new OrderEntity()));
         orderEntity.setCustomer(customerEntity);
         orderEntity.setVersion(0L);
+        orderEntity.setUuid(ORDER_UUID);
 
         return orderEntity;
     }
 
     @Test
-    @DisplayName("should map Delivery to DeliveryEntity with null Courier.DeliveryList" +
-            " and ignored Order.Customer.Orders fields to avoid cycle dependencies")
+    @DisplayName("should map Delivery to DeliveryEntity")
     void mapToEntity() {
         // given
         Delivery delivery = prepareDelivery();
+
+        // and
+        when(courierService.convertUuidToEntity(any(UUID.class)))
+                .thenReturn(prepareCourierEntity());
+
+        when(orderService.convertUuidToEntity(any(UUID.class)))
+                .thenReturn(prepareOrderEntity());
 
         // when
         DeliveryEntity deliveryEntity = deliveryEntityMapper.mapToEntity(delivery);
@@ -134,15 +132,20 @@ class DeliveryEntityMapperTest {
         assertThat(deliveryEntity.getDeliveryStatus()).isEqualTo(delivery.getDeliveryStatus());
 
         assertThat(deliveryEntity.getCourier().getUuid()).isNotNull();
-        assertThat(deliveryEntity.getCourier().getUuid()).isEqualTo(delivery.getCourier().getUuid());
+        assertThat(deliveryEntity.getCourier().getUuid()).isEqualTo(delivery.getCourier());
 
-        assertThat(deliveryEntity.getCourier().getDeliveryList()).isNull();
-        assertThat(deliveryEntity.getOrder().getCustomer().getOrders()).isNull();
+        assertThat(deliveryEntity.getOrder().getUuid()).isNotNull();
+        assertThat(deliveryEntity.getOrder().getUuid()).isEqualTo(delivery.getCourier());
+
+        //verify
+        verify(orderService, times(1))
+                .convertUuidToEntity(ORDER_UUID);
+        verify(courierService, times(1))
+                .convertUuidToEntity(COURIER_UUID);
     }
 
     @Test
-    @DisplayName("should map DeliveryEntity to Delivery with ignored Courier.DeliveryList" +
-            " and Order.Customer.Orders fields to avoid cycle dependencies")
+    @DisplayName("should map DeliveryEntity to Delivery")
     void mapToApiModel() {
         // given
         DeliveryEntity deliveryEntity = prepareDeliveryEntity();
@@ -155,9 +158,11 @@ class DeliveryEntityMapperTest {
         assertThat(delivery.getPrice()).isEqualTo(deliveryEntity.getPrice().doubleValue());
         assertThat(delivery.getDeliveryStatus()).isEqualTo(deliveryEntity.getDeliveryStatus());
 
-        assertThat(delivery.getCourier().getDeliveryList()).isNull();
-        assertThat(delivery.getCourier().getUuid()).isEqualTo(deliveryEntity.getCourier().getUuid());
-        assertThat(delivery.getOrder().getCustomer().getOrders()).isNull();
+        assertThat(delivery.getCourier()).isNotNull();
+        assertThat(delivery.getCourier()).isEqualTo(deliveryEntity.getCourier().getUuid());
+
+        assertThat(delivery.getOrder()).isNotNull();
+        assertThat(delivery.getOrder()).isEqualTo(deliveryEntity.getOrder().getUuid());
     }
 
 }

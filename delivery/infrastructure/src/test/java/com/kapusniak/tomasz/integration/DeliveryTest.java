@@ -1,10 +1,8 @@
 package com.kapusniak.tomasz.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
-import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.service.DeliveryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,6 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class DeliveryTest {
 
     private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
+    private static final UUID ORDER_UUID = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    private static final UUID COURIER_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
 
     @Autowired
     private DeliveryService deliveryService;
@@ -68,8 +68,6 @@ public class DeliveryTest {
         LocalDateTime deliveryLocalDateTime = LocalDateTime.of(2023, 6, 5, 23, 30, 0);
         OffsetDateTime deliveryOffsetDateTime = deliveryLocalDateTime.atOffset(ZoneOffset.UTC);
         DeliveryStatus deliveryStatus = IN_TRANSIT;
-        UUID orderUuid = UUID.fromString("06a4084b-5837-4303-ab5a-8b50fedb3898");
-        UUID courierUuid = UUID.fromString("1f263424-a92a-49a6-b38f-eaa2861ab332");
 
         delivery.setUuid(deliveryUuid);
         delivery.setPrice(price);
@@ -77,16 +75,8 @@ public class DeliveryTest {
         delivery.setDeliveryStatus(deliveryStatus);
         delivery.setUuid(deliveryUuid);
 
-        Order newOrder = new Order();
-        Long orderId = 1L;
-        newOrder.setId(orderId);
-        newOrder.setUuid(orderUuid);
-
-        Courier newCourier = new Courier();
-        Long courierId = 3L;
-        newCourier.setId(courierId);
-        newCourier.setUuid(courierUuid);
-
+        delivery.setCourier(COURIER_UUID);
+        delivery.setOrder(ORDER_UUID);
 
         return delivery;
     }

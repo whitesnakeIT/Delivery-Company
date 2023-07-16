@@ -2,21 +2,26 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.openapi.model.Courier;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValueCheckStrategy;
+import com.kapusniak.tomasz.service.DeliveryService;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+
+import java.util.List;
+import java.util.UUID;
 
 @Mapper(
         componentModel = "spring",
         uses = {
-                DeliveryEntityMapper.class,
+                UuidMapper.class
         }
 )
-public interface CourierEntityMapper {
-    @Mapping(
-            target = "deliveryList.courier",
-            ignore = true
-    )
+public abstract class CourierEntityMapper {
+
+    @Autowired
+    @Lazy
+    private DeliveryService deliveryService;
+
     @Mapping(
             target = "uuid",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
@@ -25,12 +30,17 @@ public interface CourierEntityMapper {
             target = "version",
             nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
     )
-    CourierEntity mapToEntity(Courier courier);
-
     @Mapping(
-            target = "deliveryList.courier",
+            target = "deliveryList",
             ignore = true
     )
-    Courier mapToApiModel(CourierEntity courierEntity);
-  
+    public abstract CourierEntity mapToEntity(Courier courier);
+
+    public abstract Courier mapToApiModel(CourierEntity courierEntity);
+
+    @AfterMapping
+    public void convertUuidToDeliveryEntity(@MappingTarget CourierEntity courierEntity, Courier courier) {
+        List<UUID> deliveries = courier.getDeliveryList();
+        courierEntity.setDeliveryList(deliveryService.convertUuidToEntity(deliveries));
+    }
 }

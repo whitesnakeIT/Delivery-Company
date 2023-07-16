@@ -1,7 +1,6 @@
 package com.kapusniak.tomasz.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kapusniak.tomasz.openapi.model.Customer;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageType;
 import com.kapusniak.tomasz.service.CustomerService;
@@ -50,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OrderTest {
 
     private static final UUID ORDER_UUID_1 = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    private static final UUID CUSTOMER_UUID_1 = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
 
     @Autowired
     private OrderService orderService;
@@ -72,8 +72,7 @@ public class OrderTest {
         order.setReceiverAddress("test receiver address");
         order.setUuid(ORDER_UUID_1);
 
-        Customer customer = customerService.findByUuid(UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3"));
-        order.setCustomer(customer);
+        order.setCustomer(CUSTOMER_UUID_1);
 
         return order;
     }
