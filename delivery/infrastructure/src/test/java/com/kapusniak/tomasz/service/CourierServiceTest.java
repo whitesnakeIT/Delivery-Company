@@ -5,7 +5,6 @@ import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
-import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -320,8 +319,8 @@ class CourierServiceTest {
         assertThat(updatedCourier.getFirstName()).isEqualTo(changedCourier.getFirstName());
         assertThat(updatedCourier.getLastName()).isEqualTo(changedCourier.getLastName());
         assertThat(updatedCourier.getCourierCompany()).isEqualTo(changedCourier.getCourierCompany());
-        assertThat(updatedCourier.getDeliveryList().get(0).getUuid()).isEqualTo(changedCourier.getDeliveryList().get(0).getUuid());
-        assertThat(updatedCourier.getDeliveryList().get(1).getUuid()).isEqualTo(changedCourier.getDeliveryList().get(1).getUuid());
+        assertThat(updatedCourier.getDeliveryList().get(0)).isEqualTo(changedCourier.getDeliveryList().get(0));
+        assertThat(updatedCourier.getDeliveryList().get(1)).isEqualTo(changedCourier.getDeliveryList().get(1));
 
         // verify
         then(courierRepository)
@@ -374,12 +373,7 @@ class CourierServiceTest {
         changedCourier.setLastName(newLastName);
         changedCourier.setCourierCompany(newCourierCompany);
 
-        Delivery newDelivery1 = new Delivery();
-        newDelivery1.setUuid(newDelivery1Uuid);
-        Delivery newDelivery2 = new Delivery();
-        newDelivery2.setUuid(newDelivery2Uuid);
-
-        changedCourier.setDeliveryList(List.of(newDelivery1, newDelivery2));
+        changedCourier.setDeliveryList(List.of(newDelivery1Uuid, newDelivery2Uuid));
 
         return changedCourier;
     }

@@ -45,7 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(authorities = "ADMIN")
 public class CourierTest {
 
-    private static final UUID UUID_COURIER_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final UUID COURIER_UUID_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
+    private static final UUID DELIVERY_UUID_2 = UUID.fromString("1f263424-a92a-49a6-b38f-eaa2861ab332");
 
     @Autowired
     private CourierService courierService;
@@ -59,7 +61,7 @@ public class CourierTest {
 
     private Courier prepareCourier() {
         Courier courier = new Courier();
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         String firstName = "testFirstName";
         String lastName = "testLastName";
         CourierCompany courierCompany = FEDEX;
@@ -67,10 +69,15 @@ public class CourierTest {
         courier.setUuid(courierUuid);
         courier.setFirstName(firstName);
         courier.setLastName(lastName);
-
         courier.setCourierCompany(courierCompany);
 
+        courier.setDeliveryList(prepareDeliveryList());
+
         return courier;
+    }
+
+    private List<UUID> prepareDeliveryList() {
+        return List.of(DELIVERY_UUID_1, DELIVERY_UUID_2);
     }
 
     @Test
@@ -101,7 +108,7 @@ public class CourierTest {
             " properties with Courier from controller method")
     void getCourierExisting() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         Courier courier = courierService.findByUuid(courierUuid);
 
         // when
@@ -200,7 +207,7 @@ public class CourierTest {
             " method from controller")
     void deleteCourierExisting() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         int sizeBeforeDeleting = courierService.findAll().size();
 
         // when
@@ -241,7 +248,7 @@ public class CourierTest {
             " from controller")
     void updateCourier() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         Courier courierBeforeEdit = courierService.findByUuid(courierUuid);
         String newFirstName = "newFirstName";
         String newLastName = "newLastName";

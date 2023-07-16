@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class TrackingService {
+public class TrackingService implements BaseEntityService<TrackingEntity> {
 
     private final TrackingJpaRepository trackingRepository;
 
@@ -94,5 +94,15 @@ public class TrackingService {
             throw new IllegalArgumentException("Updating tracking fields failed. Different uuid's");
         }
         return newTracking;
+    }
+
+    @Override
+    public TrackingEntity convertUuidToEntity(UUID uuid) {
+        return trackingRepository.findByUuid(uuid).orElseThrow();
+    }
+
+    @Override
+    public List<TrackingEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return trackingRepository.findAllByUuidIn(uuidList);
     }
 }

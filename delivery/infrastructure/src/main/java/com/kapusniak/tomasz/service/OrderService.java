@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class OrderService {
+public class OrderService implements BaseEntityService<OrderEntity> {
 
     private final OrderJpaRepository orderRepository;
 
@@ -132,5 +132,15 @@ public class OrderService {
                 .findAllByCustomerUuid(customerUuid)
                 .stream().map(orderEntityMapper::mapToApiModel)
                 .toList();
+    }
+
+    @Override
+    public OrderEntity convertUuidToEntity(UUID uuid) {
+        return orderRepository.findByUuid(uuid).orElseThrow();
+    }
+
+    @Override
+    public List<OrderEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return orderRepository.findAllByUuidIn(uuidList);
     }
 }

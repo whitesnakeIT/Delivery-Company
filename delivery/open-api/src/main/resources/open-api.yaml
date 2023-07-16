@@ -524,7 +524,10 @@ components:
         deliveryList:
           type: array
           items:
-            $ref: '#/components/schemas/Delivery'
+            type: string
+            format: uuid
+    #          items:
+    #            $ref: '#/components/schemas/Delivery'
     Customer:
       allOf:
         - $ref: '#/components/schemas/BaseModel'
@@ -553,7 +556,10 @@ components:
         orders:
           type: array
           items:
-            $ref: '#/components/schemas/Order'
+            type: string
+            format: uuid
+    #          items:
+    #            $ref: '#/components/schemas/Order'
     Delivery:
       allOf:
         - $ref: '#/components/schemas/BaseModel'
@@ -576,9 +582,13 @@ components:
           type: string
           format: date-time
         courier:
-          $ref: '#/components/schemas/Courier'
+          type: string
+          format: uuid
+        #          $ref: '#/components/schemas/Courier'
         order:
-          $ref: '#/components/schemas/Order'
+          type: string
+          format: uuid
+    #          $ref: '#/components/schemas/Order'
     Order:
       allOf:
         - $ref: '#/components/schemas/BaseModel'
@@ -609,7 +619,9 @@ components:
           type: string
           format: date
         customer:
-          $ref: '#/components/schemas/Customer'
+          type: string
+          format: uuid
+    #          $ref: '#/components/schemas/Customer'
     Tracking:
       allOf:
         - $ref: '#/components/schemas/BaseModel'

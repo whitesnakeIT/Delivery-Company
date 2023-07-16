@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CustomerService {
+public class CustomerService implements BaseEntityService<CustomerEntity> {
 
     private final CustomerJpaRepository customerRepository;
 
@@ -94,6 +94,18 @@ public class CustomerService {
             throw new IllegalArgumentException("Updating customer fields failed. Different uuid's");
         }
         return newCustomer;
+    }
+
+    @Override
+    public CustomerEntity convertUuidToEntity(UUID uuid) {
+        return customerRepository.findByUuid(uuid).orElseThrow();
+
+    }
+
+    @Override
+    public List<CustomerEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return customerRepository.findAllByUuidIn(uuidList);
+
     }
 
 }
