@@ -4,6 +4,7 @@ import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
+import com.kapusniak.tomasz.repository.jpa.CustomerJpaRepository;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
 import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 import static com.kapusniak.tomasz.openapi.model.PackageSize.LARGE;
 import static com.kapusniak.tomasz.openapi.model.PackageType.DOCUMENT;
@@ -48,13 +49,14 @@ class OrderJpaRepositoryTest {
     @Autowired
     private DeliveryJpaRepository deliveryRepository;
 
+    @Autowired
+    private CustomerJpaRepository customerRepository;
+
     CustomerEntity prepareCustomerEntity() {
-        CustomerEntity customerEntity = new CustomerEntity();
+        Optional<CustomerEntity> customerEntity = customerRepository.findById(1L);
 
-        customerEntity.setId(1L);
-        customerEntity.setUuid(UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3"));
 
-        return customerEntity;
+        return customerEntity.orElse(null);
     }
 
     OrderEntity prepareOrderEntity() {

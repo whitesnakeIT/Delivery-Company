@@ -2,38 +2,36 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
-import com.kapusniak.tomasz.openapi.model.Customer;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
+import com.kapusniak.tomasz.service.CustomerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class OrderEntityMapperTest {
 
+    public static final UUID ORDER_UUID = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    public static final UUID CUSTOMER_UUID = UUID.randomUUID();
+
     @Autowired
     private OrderEntityMapper orderEntityMapper;
 
-    public Customer prepareCustomer() {
-        Customer customer = new Customer();
-        customer.setId(1L);
-        customer.setEmail("testEmail");
-        customer.setFirstName("testFirstName");
-        customer.setLastName("testLastName");
-        customer.setOrders(List.of(new Order(), new Order()));
+    @MockBean
+    private CustomerService customerService;
 
-        return customer;
-    }
 
     public CustomerEntity prepareCustomerEntity() {
         CustomerEntity customerEntity = new CustomerEntity();
@@ -41,7 +39,8 @@ class OrderEntityMapperTest {
         customerEntity.setEmail("testEmail");
         customerEntity.setFirstName("testFirstName");
         customerEntity.setLastName("testLastName");
-        customerEntity.setOrders(List.of(new OrderEntity(), new OrderEntity()));
+        customerEntity.setVersion(0L);
+        customerEntity.setUuid(CUSTOMER_UUID);
 
         return customerEntity;
     }
@@ -53,9 +52,9 @@ class OrderEntityMapperTest {
         order.setReceiverAddress("testReceiverAddress");
         order.setPackageType(PackageType.PARCEL);
         order.setPackageSize(PackageSize.SMALL);
-        Customer customer = prepareCustomer();
-        order.setCustomer(customer);
-        order.setUuid(UUID.fromString("29755321-c483-4a12-9f64-30a132038b70"));
+        order.setCustomer(CUSTOMER_UUID);
+        order.setUuid(ORDER_UUID);
+        order.setVersion(0L);
 
         return order;
     }
@@ -69,17 +68,21 @@ class OrderEntityMapperTest {
         orderEntity.setPackageSize(PackageSize.SMALL);
         CustomerEntity customerEntity = prepareCustomerEntity();
         orderEntity.setCustomer(customerEntity);
-        orderEntity.setUuid(UUID.fromString("29755321-c483-4a12-9f64-30a132038b70"));
+        orderEntity.setUuid(ORDER_UUID);
+        orderEntity.setVersion(0L);
 
         return orderEntity;
     }
 
     @Test
-    @DisplayName("should map Order to OrderEntity with null Customer.Orders field" +
-            " to avoid cycle dependencies")
+    @DisplayName("should map Order to OrderEntity")
     public void mapToEntity() {
         // given
         Order order = prepareOrder();
+
+        // and
+        when(customerService.convertUuidToEntity(any(UUID.class)))
+                .thenReturn(prepareCustomerEntity());
 
         // when
         OrderEntity orderEntity = orderEntityMapper.mapToEntity(order);
@@ -93,12 +96,15 @@ class OrderEntityMapperTest {
         assertThat(orderEntity.getUuid()).isNotNull();
 
         assertThat(orderEntity.getCustomer()).isNotNull();
-        assertThat(orderEntity.getCustomer().getOrders()).isNull();
+        assertThat(orderEntity.getCustomer().getUuid()).isEqualTo(order.getCustomer());
+
+        // verify
+        verify(customerService, times(1))
+                .convertUuidToEntity(CUSTOMER_UUID);
     }
 
     @Test
-    @DisplayName("should map OrderEntity to Order with ignored Customer.Orders field" +
-            " to avoid cycle dependencies")
+    @DisplayName("should map OrderEntity to Order")
     public void mapToApiModel() {
         // given
         OrderEntity orderEntity = prepareOrderEntity();
@@ -114,7 +120,7 @@ class OrderEntityMapperTest {
         assertThat(order.getPackageSize()).isEqualTo(orderEntity.getPackageSize());
 
         assertThat(order.getCustomer()).isNotNull();
-        assertThat(order.getCustomer().getOrders()).isNull();
+        assertThat(order.getCustomer()).isEqualTo(orderEntity.getCustomer().getUuid());
     }
 
 }

@@ -12,7 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -28,8 +31,7 @@ import java.util.UUID;
 
 import static com.kapusniak.tomasz.openapi.model.DeliveryStatus.IN_TRANSIT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -45,9 +47,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                         "classpath:integration-test-scripts/cleanup.sql",
                         "classpath:integration-test-scripts/insert-data.sql"})
 )
+@WithMockUser(authorities = "ADMIN")
 public class DeliveryTest {
 
     private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
+    private static final UUID ORDER_UUID = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    private static final UUID COURIER_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
 
     @Autowired
     private DeliveryService deliveryService;
@@ -65,8 +70,6 @@ public class DeliveryTest {
         LocalDateTime deliveryLocalDateTime = LocalDateTime.of(2023, 6, 5, 23, 30, 0);
         OffsetDateTime deliveryOffsetDateTime = deliveryLocalDateTime.atOffset(ZoneOffset.UTC);
         DeliveryStatus deliveryStatus = IN_TRANSIT;
-        UUID orderUuid = UUID.fromString("06a4084b-5837-4303-ab5a-8b50fedb3898");
-        UUID courierUuid = UUID.fromString("1f263424-a92a-49a6-b38f-eaa2861ab332");
 
         delivery.setUuid(deliveryUuid);
         delivery.setPrice(price);
@@ -74,18 +77,33 @@ public class DeliveryTest {
         delivery.setDeliveryStatus(deliveryStatus);
         delivery.setUuid(deliveryUuid);
 
-        Order newOrder = new Order();
-        Long orderId = 1L;
-        newOrder.setId(orderId);
-        newOrder.setUuid(orderUuid);
-
-        Courier newCourier = new Courier();
-        Long courierId = 3L;
-        newCourier.setId(courierId);
-        newCourier.setUuid(courierUuid);
-
+        delivery.setCourier(COURIER_UUID);
+        delivery.setOrder(ORDER_UUID);
 
         return delivery;
+    }
+
+    @Test
+    @DisplayName("should return http status 403 unauthorized when user is anonymous" +
+            " (test shouldn't return 401 cause of RFC 7231)")
+    @WithAnonymousUser
+    public void getAllDeliveriesAnonymous() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/deliveries"));
+
+        // then
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("should return http status 403 forbidden when user not have ADMIN authority")
+    @WithMockUser(authorities = "USER")
+    public void getAllDeliveriesForbidden() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/deliveries"));
+
+        // then
+        result.andExpect(status().isForbidden());
     }
 
     @Test
@@ -108,22 +126,22 @@ public class DeliveryTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided delivery uuid is not existing" +
-            " in database for searching")
-    void getDeliveryNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            " when provided delivery uuid is not existing in database for searching")
+    void getDeliveryNonExisting() throws Exception {
         // given
         UUID deliveryUuid = UUID.randomUUID();
 
         // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/deliveries/" + deliveryUuid)
-                )
-        );
+        ResultActions result = mockMvc.perform(get(
+                "/api/v1/deliveries/" + deliveryUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for delivery failed. Unrecognized uuid " + deliveryUuid)));
     }
 
     @Test
@@ -208,22 +226,22 @@ public class DeliveryTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided delivery uuid is not existing" +
-            " in database for deleting")
-    void deleteDeliveryNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            "when provided delivery uuid is not existing in database for deleting")
+    void deleteDeliveryNonExisting() throws Exception {
         // given
         UUID deliveryUuid = UUID.randomUUID();
 
         // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/deliveries/" + deliveryUuid)
-                )
-        );
+        ResultActions result = mockMvc.perform(delete(
+                "/api/v1/deliveries/" + deliveryUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for delivery failed. Unrecognized uuid " + deliveryUuid)));
     }
 
     @Test

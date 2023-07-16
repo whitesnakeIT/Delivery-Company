@@ -36,6 +36,7 @@ class CourierRowMapperTest {
         when(resultSet.getString("LAST_NAME")).thenReturn("testLastName");
         when(resultSet.getString("COURIER_COMPANY")).thenReturn("DPD");
         when(resultSet.getString("UUID")).thenReturn("fe362772-17c3-4547-b559-ceb13e164e6f");
+        when(resultSet.getLong("VERSION")).thenReturn(0L);
     }
 
     @Test
@@ -52,5 +53,6 @@ class CourierRowMapperTest {
         assertEquals("testLastName", courier.getLastName());
         assertEquals(CourierCompany.DPD, courier.getCourierCompany());
         assertEquals("fe362772-17c3-4547-b559-ceb13e164e6f", courier.getUuid().toString());
+        assertEquals(0L, courier.getVersion());
     }
 }

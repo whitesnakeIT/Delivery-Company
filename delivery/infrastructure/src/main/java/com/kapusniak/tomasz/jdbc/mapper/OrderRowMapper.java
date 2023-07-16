@@ -24,6 +24,7 @@ public class OrderRowMapper implements RowMapper<OrderEntity> {
         order.setReceiverAddress(rs.getString("RECEIVER_ADDRESS"));
         order.setPreferredDeliveryDate(rs.getDate("PREFERRED_DELIVERY_DATE").toLocalDate());
         order.setUuid(UUID.fromString(rs.getString("UUID")));
+        order.setVersion(rs.getLong("VERSION"));
 
         return order;
     }

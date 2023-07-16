@@ -6,7 +6,11 @@ import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
 import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +20,17 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class OrderService {
+public class OrderService implements BaseEntityService<OrderEntity> {
 
     private final OrderJpaRepository orderRepository;
 
     private final OrderEntityMapper orderEntityMapper;
 
     @Transactional
+    @CachePut(value = "orders", key = "#result.uuid")
     public Order save(Order order) {
         if (order == null) {
-            throw new RuntimeException("Saving order failed. Order is null.");
+            throw new IllegalArgumentException("Saving order failed. Order is null.");
         }
         OrderEntity orderEntity = orderEntityMapper.mapToEntity(order);
         OrderEntity savedEntity = orderRepository.save(orderEntity);
@@ -33,6 +38,7 @@ public class OrderService {
         return orderEntityMapper.mapToApiModel(savedEntity);
     }
 
+    @Cacheable(value = "orders")
     public List<Order> findAll() {
         return orderRepository
                 .findAll()
@@ -41,31 +47,35 @@ public class OrderService {
                 .toList();
     }
 
+    @Cacheable(value = "orders", key = "#orderUuid")
     public Order findByUuid(UUID orderUuid) {
         if (orderUuid == null) {
-            throw new RuntimeException("Searching for order failed. Order uuid is null.");
+            throw new EntityNotFoundException("Searching for order failed. Order uuid is null.");
         }
         return orderEntityMapper.mapToApiModel(orderRepository.findByUuid(orderUuid)
-                .orElseThrow(RuntimeException::new));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Searching for order failed. Unrecognized uuid " + orderUuid)));
     }
 
+    @CacheEvict(value = "orders", key = "#orderUuid")
     @Transactional
     public void delete(UUID orderUuid) {
         if (orderUuid == null) {
-            throw new RuntimeException("Deleting order failed. Order uuid is null.");
+            throw new IllegalArgumentException("Deleting order failed. Order uuid is null.");
         }
         Order order = findByUuid(orderUuid);
 
         orderRepository.delete(orderEntityMapper.mapToEntity(order));
     }
 
+    @CachePut(value = "orders", key = "#uuid")
     @Transactional
     public Order update(UUID uuid, Order order) {
         if (uuid == null) {
-            throw new RuntimeException("Updating order failed. Order uuid is null.");
+            throw new IllegalArgumentException("Updating order failed. Order uuid is null.");
         }
         if (order == null) {
-            throw new RuntimeException("Updating order failed. Order is null.");
+            throw new IllegalArgumentException("Updating order failed. Order is null.");
         }
 
         Order orderFromDb = findByUuid(uuid);
@@ -83,14 +93,15 @@ public class OrderService {
             newOrder.setUuid(orderFromDb.getUuid());
         }
         if (!newOrder.getUuid().equals(orderFromDb.getUuid())) {
-            throw new RuntimeException("Updating order fields failed. Different uuid's");
+            throw new IllegalArgumentException("Updating order fields failed. Different uuid's");
         }
         return newOrder;
     }
 
+    @Cacheable(value = "orders")
     public List<Order> findByPackageType(PackageType packageType) {
         if (packageType == null) {
-            throw new RuntimeException("Searching for order failed. Package type is null.");
+            throw new EntityNotFoundException("Searching for order failed. Package type is null.");
         }
 
         return orderRepository
@@ -99,9 +110,10 @@ public class OrderService {
                 .toList();
     }
 
+    @Cacheable(value = "orders")
     public List<Order> findByPackageSize(PackageSize packageSize) {
         if (packageSize == null) {
-            throw new RuntimeException("Searching for order failed. Package size is null.");
+            throw new EntityNotFoundException("Searching for order failed. Package size is null.");
         }
 
         return orderRepository
@@ -110,14 +122,25 @@ public class OrderService {
                 .toList();
     }
 
+    @Cacheable(value = "order")
     public List<Order> findAllByCustomerUuid(UUID customerUuid) {
         if (customerUuid == null) {
-            throw new RuntimeException("Searching for customer orders failed. Customer uuid is null.");
+            throw new EntityNotFoundException("Searching for customer orders failed. Customer uuid is null.");
         }
 
         return orderRepository
                 .findAllByCustomerUuid(customerUuid)
                 .stream().map(orderEntityMapper::mapToApiModel)
                 .toList();
+    }
+
+    @Override
+    public OrderEntity convertUuidToEntity(UUID uuid) {
+        return orderRepository.findByUuid(uuid).orElseThrow();
+    }
+
+    @Override
+    public List<OrderEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return orderRepository.findAllByUuidIn(uuidList);
     }
 }

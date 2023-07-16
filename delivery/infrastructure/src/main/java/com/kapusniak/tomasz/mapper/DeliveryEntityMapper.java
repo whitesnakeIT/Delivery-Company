@@ -2,29 +2,54 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.openapi.model.Delivery;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import com.kapusniak.tomasz.service.CourierService;
+import com.kapusniak.tomasz.service.OrderService;
+import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.UUID;
 
 
 @Mapper(
         componentModel = "spring",
         uses = {
-                OrderEntityMapper.class,
-                TimeMapper.class
+                TimeMapper.class,
+                UuidMapper.class
         }
 )
-public interface DeliveryEntityMapper {
+public abstract class DeliveryEntityMapper {
+
+    @Autowired
+    private CourierService courierService;
+
+    @Autowired
+    private OrderService orderService;
+
     @Mapping(
-            target = "courier.deliveryList",
-            expression = "java(null)"
+            target = "uuid",
+            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
     )
-    DeliveryEntity mapToEntity(Delivery delivery);
-
-
     @Mapping(
-            target = "courier.deliveryList",
+            target = "version",
+            nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+    )
+    @Mapping(
+            target = "courier",
             ignore = true
     )
-    Delivery mapToApiModel(DeliveryEntity deliveryEntity);
+    @Mapping(
+            target = "order",
+            ignore = true
+    )
+    public abstract DeliveryEntity mapToEntity(Delivery delivery);
 
+    public abstract Delivery mapToApiModel(DeliveryEntity deliveryEntity);
+
+    @AfterMapping
+    public void convertUuidToDeliveryEntity(@MappingTarget DeliveryEntity deliveryEntity, Delivery delivery) {
+        UUID order = delivery.getOrder();
+        deliveryEntity.setOrder(orderService.convertUuidToEntity(order));
+        UUID courier = delivery.getCourier();
+        deliveryEntity.setCourier(courierService.convertUuidToEntity(courier));
+    }
 }

@@ -21,6 +21,8 @@ public class CourierRowMapper implements RowMapper<CourierEntity> {
         courier.setLastName(rs.getString("LAST_NAME"));
         courier.setCourierCompany(CourierCompany.valueOf(rs.getString("COURIER_COMPANY")));
         courier.setUuid(UUID.fromString(rs.getString("UUID")));
+        courier.setVersion(rs.getLong("VERSION"));
+
 
         return courier;
     }

@@ -41,6 +41,7 @@ class OrderRowMapperTest {
         when(resultSet.getString("PACKAGE_SIZE")).thenReturn("SMALL");
         when(resultSet.getDate("PREFERRED_DELIVERY_DATE")).thenReturn(Date.valueOf(LocalDate.of(2023, 5, 4)));
         when(resultSet.getString("UUID")).thenReturn("29755321-c483-4a12-9f64-30a132038b70");
+        when(resultSet.getLong("VERSION")).thenReturn(0L);
     }
 
     @Test
@@ -59,6 +60,6 @@ class OrderRowMapperTest {
         assertEquals(PackageSize.SMALL, order.getPackageSize());
         assertEquals(LocalDate.of(2023, 5, 4), order.getPreferredDeliveryDate());
         assertEquals("29755321-c483-4a12-9f64-30a132038b70", order.getUuid().toString());
-
+        assertEquals(0L, order.getVersion());
     }
 }

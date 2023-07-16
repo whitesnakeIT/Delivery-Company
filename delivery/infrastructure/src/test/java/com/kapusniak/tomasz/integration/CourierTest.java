@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -23,8 +26,7 @@ import java.util.UUID;
 
 import static com.kapusniak.tomasz.openapi.model.CourierCompany.FEDEX;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -40,9 +42,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                         "classpath:integration-test-scripts/cleanup.sql",
                         "classpath:integration-test-scripts/insert-data.sql"})
 )
+@WithMockUser(authorities = "ADMIN")
 public class CourierTest {
 
-    private static final UUID UUID_COURIER_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final UUID COURIER_UUID_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
+    private static final UUID DELIVERY_UUID_2 = UUID.fromString("1f263424-a92a-49a6-b38f-eaa2861ab332");
 
     @Autowired
     private CourierService courierService;
@@ -56,7 +61,7 @@ public class CourierTest {
 
     private Courier prepareCourier() {
         Courier courier = new Courier();
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         String firstName = "testFirstName";
         String lastName = "testLastName";
         CourierCompany courierCompany = FEDEX;
@@ -64,10 +69,38 @@ public class CourierTest {
         courier.setUuid(courierUuid);
         courier.setFirstName(firstName);
         courier.setLastName(lastName);
-
         courier.setCourierCompany(courierCompany);
 
+        courier.setDeliveryList(prepareDeliveryList());
+
         return courier;
+    }
+
+    private List<UUID> prepareDeliveryList() {
+        return List.of(DELIVERY_UUID_1, DELIVERY_UUID_2);
+    }
+
+    @Test
+    @DisplayName("should return http status 403 unauthorized when user is anonymous" +
+            " (test shouldn't return 401 cause of RFC 7231)")
+    @WithAnonymousUser
+    public void getAllCouriersAnonymous() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/couriers"));
+
+        // then
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("should return http status 403 forbidden when user not have ADMIN authority")
+    @WithMockUser(authorities = "USER")
+    public void getAllCouriersForbidden() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/couriers"));
+
+        // then
+        result.andExpect(status().isForbidden());
     }
 
     @Test
@@ -75,7 +108,7 @@ public class CourierTest {
             " properties with Courier from controller method")
     void getCourierExisting() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         Courier courier = courierService.findByUuid(courierUuid);
 
         // when
@@ -91,22 +124,22 @@ public class CourierTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided courier uuid is not existing" +
-            " in database for searching")
-    void getCourierNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            " when provided courier uuid is not existing in database for searching")
+    void getCourierNonExisting() throws Exception {
         // given
         UUID courierUuid = UUID.randomUUID();
 
         // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/couriers/" + courierUuid)
-                )
-        );
+        ResultActions result = mockMvc.perform(get(
+                "/api/v1/couriers/" + courierUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for courier failed. Unrecognized uuid " + courierUuid)));
     }
 
     @Test
@@ -150,7 +183,7 @@ public class CourierTest {
     }
 
     @Test
-    @DisplayName("should save edited Courier to database after executing method" +
+    @DisplayName("should save Courier to database after executing method" +
             " from controller")
     void createCourier() throws Exception {
         // given
@@ -174,7 +207,7 @@ public class CourierTest {
             " method from controller")
     void deleteCourierExisting() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         int sizeBeforeDeleting = courierService.findAll().size();
 
         // when
@@ -192,30 +225,30 @@ public class CourierTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided courier uuid is not existing" +
-            " in database for deleting")
-    void deleteCourierNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            " when provided courier uuid is not existing in database for deleting")
+    void deleteCourierNonExisting() throws Exception {
         // given
         UUID courierUuid = UUID.randomUUID();
 
         // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/couriers/" + courierUuid)
-                )
-        );
+        ResultActions result = mockMvc.perform(delete(
+                "/api/v1/couriers/" + courierUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for courier failed. Unrecognized uuid " + courierUuid)));
     }
 
     @Test
-    @DisplayName("should save Courier to database after executing method" +
+    @DisplayName("should save edited Courier to database after executing method" +
             " from controller")
     void updateCourier() throws Exception {
         // given
-        UUID courierUuid = UUID_COURIER_1;
+        UUID courierUuid = COURIER_UUID_1;
         Courier courierBeforeEdit = courierService.findByUuid(courierUuid);
         String newFirstName = "newFirstName";
         String newLastName = "newLastName";

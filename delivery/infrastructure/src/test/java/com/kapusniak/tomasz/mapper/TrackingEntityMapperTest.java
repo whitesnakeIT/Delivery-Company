@@ -24,6 +24,7 @@ class TrackingEntityMapperTest {
         tracking.setId(1L);
         tracking.setLocalization("testLocalization");
         tracking.setUuid(UUID.fromString("97e37668-b355-4ecd-83be-dbc9cf56d8c0"));
+        tracking.setVersion(0L);
 
         return tracking;
     }
@@ -33,6 +34,7 @@ class TrackingEntityMapperTest {
         trackingEntity.setId(1L);
         trackingEntity.setLocalization("123456789");
         trackingEntity.setUuid(UUID.fromString("97e37668-b355-4ecd-83be-dbc9cf56d8c0"));
+        trackingEntity.setVersion(0L);
 
         return trackingEntity;
     }

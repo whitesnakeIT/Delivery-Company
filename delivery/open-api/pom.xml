@@ -77,6 +77,7 @@
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <interfaceOnly>true</interfaceOnly>
                                 <useSpringController>true</useSpringController>
+                                <serializableModel>true</serializableModel>
                             </configOptions>
                             <!--                            <typeMappings>-->
                             <!--                                <typeMapping>Double=java.math.BigDecimal</typeMapping>-->

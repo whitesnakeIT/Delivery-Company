@@ -4,7 +4,9 @@ import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
+import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
+import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
@@ -40,19 +43,24 @@ public class DeliveryJpaRepositoryTest {
     @Autowired
     private DeliveryJpaRepository deliveryRepository;
 
+    @Autowired
+    private CourierJpaRepository courierRepository;
+
+    @Autowired
+    private OrderJpaRepository orderRepository;
+
     DeliveryEntity prepareDeliveryEntity() {
         DeliveryEntity deliveryEntity = new DeliveryEntity();
         deliveryEntity.setPrice(BigDecimal.valueOf(40.00));
         deliveryEntity.setDeliveryTime(LocalDateTime.of(2020, 6, 5, 20, 20, 0));
         deliveryEntity.setDeliveryStatus(DeliveryStatus.CREATED);
 
-        CourierEntity courierEntity = new CourierEntity();
-        courierEntity.setId(1L);
-        OrderEntity orderEntity = new OrderEntity();
-        orderEntity.setId(1L);
+        Optional<CourierEntity> courierEntity = courierRepository.findById(1L);
+        Optional<OrderEntity> orderEntity = orderRepository.findById(1L);
 
-        deliveryEntity.setCourier(courierEntity);
-        deliveryEntity.setOrder(orderEntity);
+        courierEntity.ifPresent(deliveryEntity::setCourier);
+        orderEntity.ifPresent(deliveryEntity::setOrder);
+
 
         return deliveryEntity;
     }

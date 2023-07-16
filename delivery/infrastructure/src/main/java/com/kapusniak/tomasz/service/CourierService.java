@@ -4,7 +4,11 @@ import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,16 +18,17 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CourierService {
+public class CourierService implements BaseEntityService<CourierEntity> {
 
     private final CourierJpaRepository courierRepository;
 
     private final CourierEntityMapper courierEntityMapper;
 
     @Transactional
+    @CachePut(value = "couriers", key = "#courier.uuid")
     public Courier save(Courier courier) {
         if (courier == null) {
-            throw new RuntimeException("Saving courier failed. Courier is null.");
+            throw new IllegalArgumentException("Saving courier failed. Courier is null.");
         }
         CourierEntity courierEntity = courierEntityMapper.mapToEntity(courier);
         CourierEntity savedEntity = courierRepository.save(courierEntity);
@@ -31,26 +36,30 @@ public class CourierService {
         return courierEntityMapper.mapToApiModel(savedEntity);
     }
 
+    @Cacheable(value = "couriers")
     public List<Courier> findAll() {
-        return courierRepository
-                .findAll()
+        List<CourierEntity> all = courierRepository.findAll();
+        return all
                 .stream()
                 .map(courierEntityMapper::mapToApiModel)
                 .toList();
     }
 
+    @Cacheable(value = "couriers", key = "#courierUuid")
     public Courier findByUuid(UUID courierUuid) {
         if (courierUuid == null) {
-            throw new RuntimeException("Searching for courier failed. Courier uuid is null.");
+            throw new EntityNotFoundException("Searching for courier failed. Courier uuid is null.");
         }
         return courierEntityMapper.mapToApiModel(courierRepository.findByUuid(courierUuid)
-                .orElseThrow(RuntimeException::new));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Searching for courier failed. Unrecognized uuid " + courierUuid)));
     }
 
     @Transactional
+    @CacheEvict(value = "couriers", key = "#courierUuid")
     public void delete(UUID courierUuid) {
         if (courierUuid == null) {
-            throw new RuntimeException("Deleting courier failed. Courier uuid is null.");
+            throw new IllegalArgumentException("Deleting courier failed. Courier uuid is null.");
         }
         Courier courier = findByUuid(courierUuid);
 
@@ -58,12 +67,13 @@ public class CourierService {
     }
 
     @Transactional
+    @CachePut(value = "couriers", key = "#uuid")
     public Courier update(UUID uuid, Courier courier) {
         if (uuid == null) {
-            throw new RuntimeException("Updating courier failed. Courier uuid is null.");
+            throw new IllegalArgumentException("Updating courier failed. Courier uuid is null.");
         }
         if (courier == null) {
-            throw new RuntimeException("Updating courier failed. Courier is null.");
+            throw new IllegalArgumentException("Updating courier failed. Courier is null.");
         }
 
         Courier courierFromDb = findByUuid(uuid);
@@ -81,8 +91,20 @@ public class CourierService {
             newCourier.setUuid(courierFromDb.getUuid());
         }
         if (!newCourier.getUuid().equals(courierFromDb.getUuid())) {
-            throw new RuntimeException("Updating courier fields failed. Different uuid's");
+            throw new IllegalArgumentException("Updating courier fields failed. Different uuid's");
         }
         return newCourier;
     }
+
+    @Override
+    public CourierEntity convertUuidToEntity(UUID uuid) {
+        return courierRepository.findByUuid(uuid).orElseThrow();
+
+    }
+
+    @Override
+    public List<CourierEntity> convertUuidToEntity(List<UUID> uuidList) {
+        return courierRepository.findAllByUuidIn(uuidList);
+    }
+
 }

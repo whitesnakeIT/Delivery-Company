@@ -11,7 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -23,8 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -40,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                         "classpath:integration-test-scripts/cleanup.sql",
                         "classpath:integration-test-scripts/insert-data.sql"})
 )
+@WithMockUser(authorities = "ADMIN")
 public class CustomerTest {
 
     private static final UUID UUID_CUSTOMER_1 = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
@@ -66,21 +69,37 @@ public class CustomerTest {
         customer.setFirstName(testFirstName);
         customer.setLastName(testLastName);
         customer.setUuid(UUID_CUSTOMER_1);
+        customer.setVersion(0L);
 
         Order order = orderService.findByUuid(ORDER_UUID_1);
-//        order.setPreferredDeliveryDate(LocalDate.of(2023, 6, 7));
-//        order.setPackageSize(LARGE);
-//        order.setPackageType(DOCUMENT);
-//        order.setSenderAddress("test sender address");
-//        order.setReceiverAddress("test receiver address");
-//        order.setUuid(UUID.randomUUID());
-//        order.setId(1L);
-//        order.setCustomer(customer);
 
-        customer.addOrdersItem(order);
+        customer.addOrdersItem(ORDER_UUID_1);
 
 
         return customer;
+    }
+
+    @Test
+    @DisplayName("should return http status 403 unauthorized when user is anonymous" +
+            " (test shouldn't return 401 cause of RFC 7231)")
+    @WithAnonymousUser
+    public void getAllCustomersAnonymous() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/customers"));
+
+        // then
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("should return http status 403 forbidden when user not have ADMIN authority")
+    @WithMockUser(authorities = "USER")
+    public void getAllCustomersForbidden() throws Exception {
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/customers"));
+
+        // then
+        result.andExpect(status().isForbidden());
     }
 
     @Test
@@ -104,22 +123,22 @@ public class CustomerTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided customer uuid is not existing" +
-            " in database for searching")
-    void getCustomerNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            " when provided customer uuid is not existing in database for searching")
+    void getCustomerNonExisting() throws Exception {
         // given
         UUID customerUuid = UUID.randomUUID();
 
-        // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/customers/" + customerUuid)
-                )
-        );
+        /// when
+        ResultActions result = mockMvc.perform(get(
+                "/api/v1/customers/" + customerUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for customer failed. Unrecognized uuid " + customerUuid)));
     }
 
     @Test
@@ -205,22 +224,22 @@ public class CustomerTest {
     }
 
     @Test
-    @DisplayName("should throw an exception when provided customer uuid is not existing" +
-            " in database for deleting")
-    void deleteCustomerNonExisting() {
+    @DisplayName("should return ResponseEntity<ApiError> with correct json data" +
+            " when provided customer uuid is not existing in database for deleting")
+    void deleteCustomerNonExisting() throws Exception {
         // given
         UUID customerUuid = UUID.randomUUID();
 
         // when
-        Throwable throwable = catchThrowable(
-                () -> mockMvc.perform(get(
-                        "/api/v1/customers/" + customerUuid)
-                )
-        );
+        ResultActions result = mockMvc.perform(delete(
+                "/api/v1/customers/" + customerUuid));
 
         // then
-        assertThat(throwable.getCause())
-                .isInstanceOf(RuntimeException.class);
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("httpStatus", equalTo(HttpStatus.NOT_FOUND.value())))
+                .andExpect(jsonPath("timestamp", notNullValue()))
+                .andExpect(jsonPath("message", equalTo("Searching for customer failed. Unrecognized uuid " + customerUuid)));
     }
 
     @Test

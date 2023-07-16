@@ -5,8 +5,8 @@ import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
-import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -122,7 +122,7 @@ class CourierServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Saving courier failed. Courier is null.");
 
         // verify
@@ -186,7 +186,7 @@ class CourierServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for courier failed. Courier uuid is null.");
 
         // verify
@@ -227,7 +227,7 @@ class CourierServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Deleting courier failed. Courier uuid is null.");
     }
 
@@ -244,7 +244,7 @@ class CourierServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating courier failed. Courier uuid is null.");
     }
 
@@ -261,7 +261,7 @@ class CourierServiceTest {
 
         // then
         assertThat(thrown)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating courier failed. Courier is null.");
     }
 
@@ -285,7 +285,7 @@ class CourierServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating courier fields failed. Different uuid's");
     }
 
@@ -319,8 +319,8 @@ class CourierServiceTest {
         assertThat(updatedCourier.getFirstName()).isEqualTo(changedCourier.getFirstName());
         assertThat(updatedCourier.getLastName()).isEqualTo(changedCourier.getLastName());
         assertThat(updatedCourier.getCourierCompany()).isEqualTo(changedCourier.getCourierCompany());
-        assertThat(updatedCourier.getDeliveryList().get(0).getUuid()).isEqualTo(changedCourier.getDeliveryList().get(0).getUuid());
-        assertThat(updatedCourier.getDeliveryList().get(1).getUuid()).isEqualTo(changedCourier.getDeliveryList().get(1).getUuid());
+        assertThat(updatedCourier.getDeliveryList().get(0)).isEqualTo(changedCourier.getDeliveryList().get(0));
+        assertThat(updatedCourier.getDeliveryList().get(1)).isEqualTo(changedCourier.getDeliveryList().get(1));
 
         // verify
         then(courierRepository)
@@ -373,12 +373,7 @@ class CourierServiceTest {
         changedCourier.setLastName(newLastName);
         changedCourier.setCourierCompany(newCourierCompany);
 
-        Delivery newDelivery1 = new Delivery();
-        newDelivery1.setUuid(newDelivery1Uuid);
-        Delivery newDelivery2 = new Delivery();
-        newDelivery2.setUuid(newDelivery2Uuid);
-
-        changedCourier.setDeliveryList(List.of(newDelivery1, newDelivery2));
+        changedCourier.setDeliveryList(List.of(newDelivery1Uuid, newDelivery2Uuid));
 
         return changedCourier;
     }

@@ -117,7 +117,7 @@ public class CourierControllerTest {
         Courier courier = getCourier();
         when(courierService
                 .save(any(Courier.class)))
-                .thenReturn(getCourier());
+                .thenReturn(courier);
 
         // when
         mockMvc.perform(post("/api/v1/couriers")

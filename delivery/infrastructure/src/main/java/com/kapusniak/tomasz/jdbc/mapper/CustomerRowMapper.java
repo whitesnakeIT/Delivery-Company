@@ -20,6 +20,7 @@ public class CustomerRowMapper implements RowMapper<CustomerEntity> {
         customer.setLastName(rs.getString("LAST_NAME"));
         customer.setEmail(rs.getString("EMAIL"));
         customer.setUuid(UUID.fromString(rs.getString("UUID")));
+        customer.setVersion(rs.getLong("VERSION"));
 
 
         return customer;

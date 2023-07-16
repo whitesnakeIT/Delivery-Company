@@ -3,11 +3,11 @@ package com.kapusniak.tomasz.service;
 import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.mapper.OrderEntityMapper;
-import com.kapusniak.tomasz.openapi.model.Customer;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
 import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.*;
 class OrderServiceTest {
 
     public static final UUID ORDER_UUID_1 = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    public static final UUID CUSTOMER_UUID = UUID.randomUUID();
 
     @Mock
     private OrderJpaRepository orderRepository;
@@ -55,9 +56,7 @@ class OrderServiceTest {
         order.setReceiverAddress("new receiver address");
         order.setUuid(ORDER_UUID_1);
 
-        Customer customer = new Customer();
-        customer.setId(5L);
-        order.setCustomer(customer);
+        order.setCustomer(CUSTOMER_UUID);
 
         return order;
     }
@@ -73,7 +72,7 @@ class OrderServiceTest {
         orderEntity.setUuid(ORDER_UUID_1);
 
         CustomerEntity customerEntity = new CustomerEntity();
-        customerEntity.setId(5L);
+        customerEntity.setUuid(CUSTOMER_UUID);
         orderEntity.setCustomer(customerEntity);
 
         return orderEntity;
@@ -139,7 +138,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Saving order failed. Order is null.");
 
         // verify
@@ -201,7 +200,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for order failed. Order uuid is null.");
 
         // verify
@@ -240,7 +239,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for order failed. Package type is null.");
     }
 
@@ -275,7 +274,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for order failed. Package size is null.");
     }
 
@@ -311,7 +310,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for customer orders failed. Customer uuid is null.");
     }
 
@@ -351,7 +350,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Deleting order failed. Order uuid is null.");
     }
 
@@ -368,7 +367,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating order failed. Order uuid is null.");
     }
 
@@ -385,7 +384,7 @@ class OrderServiceTest {
 
         // then
         assertThat(thrown)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating order failed. Order is null.");
     }
 
@@ -396,7 +395,7 @@ class OrderServiceTest {
         UUID oldUuid = ORDER_UUID_1;
 
         Order newOrder = new Order();
-        UUID newUuid = UUID.randomUUID();
+        UUID newUuid = CUSTOMER_UUID;
         newOrder.setUuid(newUuid);
 
         OrderEntity orderEntity = prepareOrderEntity();
@@ -410,7 +409,7 @@ class OrderServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating order fields failed. Different uuid's");
     }
 
@@ -447,7 +446,7 @@ class OrderServiceTest {
         assertThat(updatedOrder.getPackageType()).isEqualTo(changedOrder.getPackageType());
         assertThat(updatedOrder.getPreferredDeliveryDate()).isEqualTo(changedOrder.getPreferredDeliveryDate());
 
-        assertThat(updatedOrder.getCustomer().getUuid()).isEqualTo(changedOrder.getCustomer().getUuid());
+        assertThat(updatedOrder.getCustomer()).isEqualTo(changedOrder.getCustomer());
 
         // verify
         then(orderRepository)
@@ -463,7 +462,7 @@ class OrderServiceTest {
         PackageSize newPackageSize = EXTRA_LARGE;
         LocalDate newPreferredDeliveryDate = LocalDate.of(2023, 5, 28);
 
-        UUID newCustomerUuid = UUID.randomUUID();
+        UUID newCustomerUuid = CUSTOMER_UUID;
         Order changedOrder = new Order();
         changedOrder.setUuid(orderUuid);
         changedOrder.setSenderAddress(newSenderAddress);
@@ -472,9 +471,9 @@ class OrderServiceTest {
         changedOrder.setPackageType(newPackageType);
         changedOrder.setPreferredDeliveryDate(newPreferredDeliveryDate);
 
-        Customer customer = new Customer();
-        customer.setUuid(newCustomerUuid);
-        changedOrder.setCustomer(customer);
+//        Customer customer = new Customer();
+//        customer.setUuid(newCustomerUuid);
+        changedOrder.setCustomer(UUID.randomUUID());
 
         return changedOrder;
     }

@@ -4,6 +4,7 @@ import com.kapusniak.tomasz.entity.TrackingEntity;
 import com.kapusniak.tomasz.mapper.TrackingEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Tracking;
 import com.kapusniak.tomasz.repository.jpa.TrackingJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -114,7 +115,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Saving tracking failed. Tracking is null.");
 
         // verify
@@ -178,7 +179,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Searching for tracking failed. Tracking uuid is null.");
 
         // verify
@@ -219,7 +220,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Deleting tracking failed. Tracking uuid is null.");
     }
 
@@ -236,7 +237,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating tracking failed. Tracking uuid is null.");
     }
 
@@ -253,7 +254,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(thrown)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating tracking failed. Tracking is null.");
     }
 
@@ -277,7 +278,7 @@ class TrackingServiceTest {
 
         // then
         assertThat(throwable)
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Updating tracking fields failed. Different uuid's");
     }
 
