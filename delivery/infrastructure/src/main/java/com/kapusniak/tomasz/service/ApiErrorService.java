@@ -1,4 +1,4 @@
-package com.kapusniak.tomasz.handler;
+package com.kapusniak.tomasz.service;
 
 import com.kapusniak.tomasz.openapi.model.ApiError;
 import com.kapusniak.tomasz.openapi.model.ApiSubError;
@@ -67,6 +67,5 @@ public class ApiErrorService {
         ApiError apiError = buildApiError(ex);
 
         return apiError;
-
     }
 }

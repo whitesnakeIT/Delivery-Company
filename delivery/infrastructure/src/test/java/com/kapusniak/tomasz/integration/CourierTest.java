@@ -3,7 +3,7 @@ package com.kapusniak.tomasz.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
-import com.kapusniak.tomasz.service.CourierService;
+import com.kapusniak.tomasz.service.model.CourierService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

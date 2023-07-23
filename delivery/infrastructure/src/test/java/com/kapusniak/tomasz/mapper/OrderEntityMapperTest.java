@@ -5,7 +5,7 @@ import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
-import com.kapusniak.tomasz.service.CustomerService;
+import com.kapusniak.tomasz.service.model.CustomerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

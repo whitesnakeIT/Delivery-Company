@@ -6,6 +6,7 @@ import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
+import com.kapusniak.tomasz.service.model.CourierService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

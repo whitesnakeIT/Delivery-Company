@@ -1,14 +1,20 @@
-package com.kapusniak.tomasz.service;
+package com.kapusniak.tomasz.service.model;
 
 import com.kapusniak.tomasz.entity.CourierEntity;
 import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
+import com.kapusniak.tomasz.service.BaseEntityService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,14 +24,15 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CourierService implements BaseEntityService<CourierEntity> {
+public class CourierService implements BaseEntityService<CourierEntity>, BaseModelService<Courier> {
 
     private final CourierJpaRepository courierRepository;
 
     private final CourierEntityMapper courierEntityMapper;
 
+    @Override
     @Transactional
-    @CachePut(value = "couriers", key = "#courier.uuid")
+    @CachePut(value = "courier", key = "#courier.uuid")
     public Courier save(Courier courier) {
         if (courier == null) {
             throw new IllegalArgumentException("Saving courier failed. Courier is null.");
@@ -36,16 +43,8 @@ public class CourierService implements BaseEntityService<CourierEntity> {
         return courierEntityMapper.mapToApiModel(savedEntity);
     }
 
-    @Cacheable(value = "couriers")
-    public List<Courier> findAll() {
-        List<CourierEntity> all = courierRepository.findAll();
-        return all
-                .stream()
-                .map(courierEntityMapper::mapToApiModel)
-                .toList();
-    }
-
-    @Cacheable(value = "couriers", key = "#courierUuid")
+    @Override
+    @Cacheable(value = "courier", key = "#courierUuid")
     public Courier findByUuid(UUID courierUuid) {
         if (courierUuid == null) {
             throw new EntityNotFoundException("Searching for courier failed. Courier uuid is null.");
@@ -55,8 +54,9 @@ public class CourierService implements BaseEntityService<CourierEntity> {
                         new EntityNotFoundException("Searching for courier failed. Unrecognized uuid " + courierUuid)));
     }
 
+    @Override
     @Transactional
-    @CacheEvict(value = "couriers", key = "#courierUuid")
+    @CacheEvict(value = "courier", key = "#courierUuid")
     public void delete(UUID courierUuid) {
         if (courierUuid == null) {
             throw new IllegalArgumentException("Deleting courier failed. Courier uuid is null.");
@@ -66,8 +66,9 @@ public class CourierService implements BaseEntityService<CourierEntity> {
         courierRepository.delete(courierEntityMapper.mapToEntity(courier));
     }
 
+    @Override
     @Transactional
-    @CachePut(value = "couriers", key = "#uuid")
+    @CachePut(value = "courier", key = "#uuid")
     public Courier update(UUID uuid, Courier courier) {
         if (uuid == null) {
             throw new IllegalArgumentException("Updating courier failed. Courier uuid is null.");
@@ -105,6 +106,24 @@ public class CourierService implements BaseEntityService<CourierEntity> {
     @Override
     public List<CourierEntity> convertUuidToEntity(List<UUID> uuidList) {
         return courierRepository.findAllByUuidIn(uuidList);
+    }
+
+    @Override
+    @Cacheable(value = "couriers")
+    public Page<Courier> findAll(Integer page) {
+        Integer pageNumber = validatePage(page);
+        Page<CourierEntity> courierPage = courierRepository
+                .findAll(PageRequest.of(
+                        pageNumber,
+                        PageSize.EXTRA_SMALL.getValue()));
+        List<Courier> couriers = courierPage
+                .getContent()
+                .stream()
+                .map(courierEntityMapper::mapToApiModel)
+                .toList();
+        Pageable pageable = PageRequest.of(page, PageSize.EXTRA_SMALL.getValue());
+
+        return new PageImpl<>(couriers, pageable, courierPage.getTotalElements());
     }
 
 }

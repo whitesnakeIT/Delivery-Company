@@ -4,6 +4,7 @@ import com.kapusniak.tomasz.entity.TrackingEntity;
 import com.kapusniak.tomasz.mapper.TrackingEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Tracking;
 import com.kapusniak.tomasz.repository.jpa.TrackingJpaRepository;
+import com.kapusniak.tomasz.service.model.TrackingService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

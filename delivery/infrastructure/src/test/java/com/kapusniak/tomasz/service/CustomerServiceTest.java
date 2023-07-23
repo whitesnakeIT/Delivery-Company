@@ -5,6 +5,7 @@ import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.mapper.CustomerEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Customer;
 import com.kapusniak.tomasz.repository.jpa.CustomerJpaRepository;
+import com.kapusniak.tomasz.service.model.CustomerService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

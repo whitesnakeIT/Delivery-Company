@@ -7,6 +7,7 @@ import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
 import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
+import com.kapusniak.tomasz.service.model.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

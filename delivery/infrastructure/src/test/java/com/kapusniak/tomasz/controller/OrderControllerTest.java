@@ -2,7 +2,7 @@ package com.kapusniak.tomasz.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Order;
-import com.kapusniak.tomasz.service.OrderService;
+import com.kapusniak.tomasz.service.model.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

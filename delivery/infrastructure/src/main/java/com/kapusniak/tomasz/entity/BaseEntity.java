@@ -15,7 +15,7 @@ import java.util.UUID;
 @Setter
 public abstract class BaseEntity {
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "uuid", nullable = false, updatable = false)
     private UUID uuid = UUID.randomUUID();
 
     @Version

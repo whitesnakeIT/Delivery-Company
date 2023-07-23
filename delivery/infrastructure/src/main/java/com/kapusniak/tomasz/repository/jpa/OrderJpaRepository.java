@@ -7,6 +7,7 @@ import com.kapusniak.tomasz.repository.UuidRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,5 +20,7 @@ public interface OrderJpaRepository extends UuidRepository<OrderEntity, UUID> {
     List<OrderEntity> findByPackageSize(PackageSize packageSize);
 
     List<OrderEntity> findAllByCustomerUuid(UUID customerId);
+
+    List<OrderEntity> findAllByPreferredDeliveryDateBetween(LocalDate startDate, LocalDate endDate);
 
 }

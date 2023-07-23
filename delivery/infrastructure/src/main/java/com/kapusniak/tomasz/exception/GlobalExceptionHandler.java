@@ -1,6 +1,7 @@
-package com.kapusniak.tomasz.handler;
+package com.kapusniak.tomasz.exception;
 
 import com.kapusniak.tomasz.openapi.model.ApiError;
+import com.kapusniak.tomasz.service.ApiErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.StaleObjectStateException;

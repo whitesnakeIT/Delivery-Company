@@ -7,6 +7,7 @@ import com.kapusniak.tomasz.mapper.DeliveryEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
+import com.kapusniak.tomasz.service.model.DeliveryService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

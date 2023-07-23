@@ -2,14 +2,12 @@ package com.kapusniak.tomasz.controller;
 
 import com.kapusniak.tomasz.openapi.api.OrdersApi;
 import com.kapusniak.tomasz.openapi.model.Order;
-import com.kapusniak.tomasz.service.OrderService;
+import com.kapusniak.tomasz.service.model.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,10 @@ public class OrderController implements OrdersApi {
     }
 
     @Override
-    public ResponseEntity<List<Order>> getAllOrders() {
-        List<Order> orderList = orderService.findAll();
+    public ResponseEntity<List<Order>> getAllOrders(@RequestParam(defaultValue = "0") Integer pageNumber) {
+        Page<Order> orderList = orderService.findAll(pageNumber);
 
-        return ResponseEntity.ok(orderList);
+        return ResponseEntity.ok(orderList.getContent());
     }
 
     @Override

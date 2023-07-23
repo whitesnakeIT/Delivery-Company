@@ -3,7 +3,7 @@ package com.kapusniak.tomasz.mapper;
 import com.kapusniak.tomasz.entity.CustomerEntity;
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.Customer;
-import com.kapusniak.tomasz.service.OrderService;
+import com.kapusniak.tomasz.service.model.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

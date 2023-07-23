@@ -2,14 +2,12 @@ package com.kapusniak.tomasz.controller;
 
 import com.kapusniak.tomasz.openapi.api.CustomersApi;
 import com.kapusniak.tomasz.openapi.model.Customer;
-import com.kapusniak.tomasz.service.CustomerService;
+import com.kapusniak.tomasz.service.model.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,10 @@ public class CustomerController implements CustomersApi {
     }
 
     @Override
-    public ResponseEntity<List<Customer>> getAllCustomers() {
-        List<Customer> customerList = customerService.findAll();
+    public ResponseEntity<List<Customer>> getAllCustomers(@RequestParam(defaultValue = "0") Integer pageNumber) {
+        Page<Customer> customerList = customerService.findAll(pageNumber);
 
-        return ResponseEntity.ok(customerList);
+        return ResponseEntity.ok(customerList.getContent());
     }
 
     @Override
