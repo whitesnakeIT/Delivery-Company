@@ -1,6 +1,7 @@
 package com.kapusniak.tomasz.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
 import com.kapusniak.tomasz.service.model.DeliveryService;

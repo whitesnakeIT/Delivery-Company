@@ -21,7 +21,6 @@ import java.time.format.DateTimeFormatter;
 
 @Configuration
 public class BeanConfiguration {
-
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder.build();
