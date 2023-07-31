@@ -1,5 +1,7 @@
 package com.kapusniak.tomasz.exception;
 
+import com.kapusniak.tomasz.file.exception.FileStorageException;
+import com.kapusniak.tomasz.file.exception.MyFileNotFoundException;
 import com.kapusniak.tomasz.openapi.model.ApiError;
 import com.kapusniak.tomasz.service.ApiErrorService;
 import jakarta.persistence.EntityNotFoundException;
@@ -50,6 +52,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        ApiError apiError = apiErrorService.createApiError(ex);
+
+        return new ResponseEntity<>(apiError, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(MyFileNotFoundException.class)
+    protected ResponseEntity<Object> handleMyFileNotFoundException(MyFileNotFoundException ex) {
+        ApiError apiError = apiErrorService.createApiError(ex);
+
+        return new ResponseEntity<>(apiError, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    protected ResponseEntity<Object> handleFileStorageException(FileStorageException ex) {
         ApiError apiError = apiErrorService.createApiError(ex);
 
         return new ResponseEntity<>(apiError, HttpStatus.OK);

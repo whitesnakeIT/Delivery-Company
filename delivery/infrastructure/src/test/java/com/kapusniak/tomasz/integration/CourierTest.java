@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -45,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(authorities = "ADMIN")
 public class CourierTest {
 
+    private static final Integer PAGE_NUMBER = 0;
     private static final UUID COURIER_UUID_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
     private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
     private static final UUID DELIVERY_UUID_2 = UUID.fromString("1f263424-a92a-49a6-b38f-eaa2861ab332");
@@ -143,11 +145,11 @@ public class CourierTest {
     }
 
     @Test
-    @DisplayName("should correctly return list Couriers from database after executing" +
+    @DisplayName("should correctly return Page Couriers from database after executing" +
             " method from controller")
     void getAllCouriers() throws Exception {
         // given
-        List<Courier> courierList = courierService.findAll();
+        Page<Courier> courierPage = courierService.findAll(PAGE_NUMBER);
 
         // when
         ResultActions result =
@@ -159,9 +161,9 @@ public class CourierTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].uuid")
-                        .value(courierList.get(0).getUuid().toString()))
+                        .value(courierPage.getContent().get(0).getUuid().toString()))
                 .andExpect(jsonPath("$[1].uuid")
-                        .value(courierList.get(1).getUuid().toString()));
+                        .value(courierPage.getContent().get(1).getUuid().toString()));
 
 
     }
@@ -208,7 +210,7 @@ public class CourierTest {
     void deleteCourierExisting() throws Exception {
         // given
         UUID courierUuid = COURIER_UUID_1;
-        int sizeBeforeDeleting = courierService.findAll().size();
+        int sizeBeforeDeleting = courierService.findAll(PAGE_NUMBER).getContent().size();
 
         // when
         ResultActions result =
@@ -219,7 +221,7 @@ public class CourierTest {
         result.andExpect(status().isNoContent());
 
         // and
-        int sizeAfterDeleting = courierService.findAll().size();
+        int sizeAfterDeleting = courierService.findAll(PAGE_NUMBER).getContent().size();
         assertThat(sizeAfterDeleting).isEqualTo(sizeBeforeDeleting - 1);
 
     }

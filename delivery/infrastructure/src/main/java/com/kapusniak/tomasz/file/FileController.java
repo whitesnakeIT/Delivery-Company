@@ -1,5 +1,6 @@
 package com.kapusniak.tomasz.file;
 
+import com.kapusniak.tomasz.config.security.UserService;
 import com.kapusniak.tomasz.file.payload.UploadFileResponse;
 import com.kapusniak.tomasz.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,8 @@ public class FileController {
 
     private final EmailService emailService;
 
+    private final UserService userService;
+
     @GetMapping("/")
     public ResponseEntity<Resource> showView() {
         try {
@@ -45,14 +48,14 @@ public class FileController {
     @PostMapping("/uploadFile")
     public UploadFileResponse uploadFile(@RequestParam("file") MultipartFile file) {
         String fileName = fileStorageService.storeFile(file);
+        String loggedUserEmail = userService.getUserEmail();
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/v1/file/downloadFile/")
                 .path(fileName)
                 .toUriString();
 
-        emailService.sendSimpleMessage("tkapusniak1993@gmail.com", "Link for download file: ", fileDownloadUri);
-
+        emailService.sendSimpleMessage(loggedUserEmail, "Link for download file: ", fileDownloadUri);
 
         return new UploadFileResponse(fileName, fileDownloadUri,
                 file.getContentType(), file.getSize());
@@ -60,9 +63,8 @@ public class FileController {
 
     @PostMapping("/uploadMultipleFiles")
     public List<UploadFileResponse> uploadMultipleFiles(@RequestParam("files") MultipartFile[] files) {
-        return Arrays.asList(files)
-                .stream()
-                .map(file -> uploadFile(file))
+        return Arrays.stream(files)
+                .map(this::uploadFile)
                 .collect(Collectors.toList());
     }
 
@@ -83,7 +85,6 @@ public class FileController {
         if (contentType == null) {
             contentType = "application/octet-stream";
         }
-
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))

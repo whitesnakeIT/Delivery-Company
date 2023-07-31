@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class DeliveryControllerTest {
+    private static final Integer PAGE_NUMBER = 0;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -55,7 +58,7 @@ public class DeliveryControllerTest {
         return delivery1;
     }
 
-    public List<Delivery> getDeliveryList() {
+    public Page<Delivery> getDeliveryList() {
         List<Delivery> deliveries = new ArrayList<>();
         Delivery delivery1 = new Delivery();
         delivery1.setId(1L);
@@ -66,15 +69,15 @@ public class DeliveryControllerTest {
         deliveries.add(delivery1);
         deliveries.add(delivery2);
 
-        return deliveries;
+        return new PageImpl<>(deliveries);
     }
 
     @Test
-    @DisplayName("should correctly return list of deliveries")
+    @DisplayName("should correctly return page of deliveries")
     public void getAllDeliveries() throws Exception {
         // given
-        List<Delivery> deliveries = getDeliveryList();
-        when(deliveryService.findAll()).thenReturn(deliveries);
+        Page<Delivery> deliveries = getDeliveryList();
+        when(deliveryService.findAll(any())).thenReturn(deliveries);
 
         // when
         mockMvc.perform(get("/api/v1/deliveries"))
@@ -88,7 +91,7 @@ public class DeliveryControllerTest {
         // then
         verify(deliveryService,
                 times(1))
-                .findAll();
+                .findAll(PAGE_NUMBER);
         verifyNoMoreInteractions(deliveryService);
     }
 

@@ -17,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlGroup;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +32,19 @@ import static org.mockito.Mockito.times;
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application-jdbc-test.properties")
 @ActiveProfiles("jdbc")
+@SqlGroup(
+        @Sql(
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD,
+                scripts = {
+                        "classpath:h2-scripts/cleanup.sql",
+                        "classpath:h2-scripts/insert-data.sql"
+                }
+        )
+)
 class JdbcExamplesTest {
 
+    public static final UUID COURIER_UUID = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    public static final UUID CUSTOMER_UUID = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
     @Mock
     private CourierRowMapper courierRowMapper;
     @Mock
@@ -54,7 +67,7 @@ class JdbcExamplesTest {
         customer.setFirstName("testFirstName");
         customer.setLastName("testLastName");
         customer.setEmail("testEmail");
-        customer.setUuid(UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3"));
+        customer.setUuid(CUSTOMER_UUID);
 
         courier = new CourierEntity();
         courier.setId(1L);
@@ -62,7 +75,7 @@ class JdbcExamplesTest {
         courier.setLastName("courierLastName");
         courier.setCourierCompany(CourierCompany.DPD);
         courier.setDeliveryList(List.of(new DeliveryEntity(), new DeliveryEntity()));
-        courier.setUuid(UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f"));
+        courier.setUuid(COURIER_UUID);
 
     }
 
@@ -75,7 +88,7 @@ class JdbcExamplesTest {
         String lastName = "testLastName";
         String email = "testEmail";
 
-        given(jdbcTemplate.update(any(String.class), any(String.class)))
+        given(jdbcTemplate.update(anyString(), any(Object[].class)))
                 .willReturn(1);
 
         // when
@@ -104,7 +117,7 @@ class JdbcExamplesTest {
                 any(CourierRowMapper.class)))
                 .willReturn(courier);
 
-        UUID courierUuid = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+        UUID courierUuid = COURIER_UUID;
 
         // when
         CourierEntity courierByUuid = jdbcExamples.getCourierByUuid(courierUuid);
@@ -136,7 +149,7 @@ class JdbcExamplesTest {
                 any(OrderRowMapper.class)))
                 .willReturn(List.of(new OrderEntity()));
 
-        UUID customerUuid = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
+        UUID customerUuid = CUSTOMER_UUID;
 
         // when
         CustomerEntity customerByUuid = jdbcExamples.getCustomerByUuid(customerUuid);
@@ -282,7 +295,7 @@ class JdbcExamplesTest {
     void getOrderByUuid() {
 
         // given
-        UUID orderUuid = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
+        UUID orderUuid = CUSTOMER_UUID;
 
 
         given(jdbcTemplate.queryForObject(

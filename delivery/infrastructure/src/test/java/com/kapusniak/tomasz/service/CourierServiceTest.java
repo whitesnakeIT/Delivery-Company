@@ -5,6 +5,7 @@ import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.mapper.CourierEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.CourierJpaRepository;
 import com.kapusniak.tomasz.service.model.CourierService;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,6 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -33,6 +38,8 @@ import static org.mockito.Mockito.times;
 class CourierServiceTest {
 
     private static final UUID COURIER_UUID_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final Integer PAGE_NUMBER = 0;
+    private static final PageRequest PAGEABLE = PageRequest.of(PAGE_NUMBER, PageSize.EXTRA_SMALL.getValue());
     @Mock
     private CourierJpaRepository courierRepository;
     @Mock
@@ -64,14 +71,11 @@ class CourierServiceTest {
         return courierEntity;
     }
 
-    private List<Courier> prepareCourierList() {
 
-        return List.of(prepareCourier(), prepareCourier());
-    }
+    private Page<CourierEntity> prepareCourierEntityPage() {
+        List<CourierEntity> courierEntityList = List.of(prepareCourierEntity(), prepareCourierEntity());
 
-    private List<CourierEntity> prepareCourierEntityList() {
-
-        return List.of(prepareCourierEntity(), prepareCourierEntity());
+        return new PageImpl<>(courierEntityList);
     }
 
     @BeforeEach
@@ -131,26 +135,27 @@ class CourierServiceTest {
     }
 
     @Test
-    @DisplayName("should return list of all courier with correct size and check method invocations")
+    @DisplayName("should return page of courier with correct size and check method invocations")
     void findAll() {
 
         // given
-        List<CourierEntity> courierEntityList = prepareCourierEntityList();
+        Page<CourierEntity> courierEntityPage = prepareCourierEntityPage();
 
-        given(courierRepository.findAll())
-                .willReturn(courierEntityList);
+        // and
+        given(courierRepository.findAll(any(Pageable.class)))
+                .willReturn(courierEntityPage);
 
         // when
-        List<Courier> allCouriers = courierService.findAll();
+        Page<Courier> courierPage = courierService.findAll(PAGE_NUMBER);
 
         // then
-        assertThat(allCouriers.size())
+        assertThat(courierPage.getContent().size())
                 .isEqualTo(2);
 
         // verify
         then(courierRepository)
                 .should(times(1))
-                .findAll();
+                .findAll(PAGEABLE);
     }
 
     @Test

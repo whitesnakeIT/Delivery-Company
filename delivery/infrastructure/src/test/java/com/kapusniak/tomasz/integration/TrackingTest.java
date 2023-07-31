@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -20,7 +21,6 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(authorities = "ADMIN")
 public class TrackingTest {
 
+    private static final Integer PAGE_NUMBER = 0;
     private static final UUID TRACKING_UUID_1 = UUID.fromString("97e37668-b355-4ecd-83be-dbc9cf56d8c0");
 
     @Autowired
@@ -117,11 +118,11 @@ public class TrackingTest {
     }
 
     @Test
-    @DisplayName("should correctly return list Tracking from database after executing" +
+    @DisplayName("should correctly return page Tracking from database after executing" +
             " method from controller")
     void getAllTracking() throws Exception {
         // given
-        List<Tracking> trackingList = trackingService.findAll();
+        Page<Tracking> trackingPage = trackingService.findAll(PAGE_NUMBER);
 
         // when
         ResultActions result =
@@ -133,9 +134,9 @@ public class TrackingTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].uuid")
-                        .value(trackingList.get(0).getUuid().toString()))
+                        .value(trackingPage.getContent().get(0).getUuid().toString()))
                 .andExpect(jsonPath("$[1].uuid")
-                        .value(trackingList.get(1).getUuid().toString()));
+                        .value(trackingPage.getContent().get(1).getUuid().toString()));
 
 
     }
@@ -183,7 +184,7 @@ public class TrackingTest {
     void deleteTrackingExisting() throws Exception {
         // given
         UUID trackingUuid = TRACKING_UUID_1;
-        int sizeBeforeDeleting = trackingService.findAll().size();
+        int sizeBeforeDeleting = trackingService.findAll(PAGE_NUMBER).getContent().size();
 
         // when
         ResultActions result =
@@ -194,7 +195,7 @@ public class TrackingTest {
         result.andExpect(status().isNoContent());
 
         // and
-        int sizeAfterDeleting = trackingService.findAll().size();
+        int sizeAfterDeleting = trackingService.findAll(PAGE_NUMBER).getContent().size();
         assertThat(sizeAfterDeleting).isEqualTo(sizeBeforeDeleting - 1);
 
     }

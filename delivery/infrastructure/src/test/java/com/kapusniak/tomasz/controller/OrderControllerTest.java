@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,6 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 public class OrderControllerTest {
 
+    private static final Integer PAGE_NUMBER = 0;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -55,7 +59,7 @@ public class OrderControllerTest {
         return order1;
     }
 
-    public List<Order> getOrderList() {
+    public Page<Order> getOrderList() {
         List<Order> orders = new ArrayList<>();
         Order order1 = new Order();
         order1.setId(1L);
@@ -77,15 +81,15 @@ public class OrderControllerTest {
 
         orders.add(order1);
         orders.add(order2);
-        return orders;
+        return new PageImpl<>(orders);
     }
 
     @Test
     @DisplayName("should correctly return list of orders")
     public void getAllOrders() throws Exception {
         // given
-        List<Order> orders = getOrderList();
-        when(orderService.findAll()).thenReturn(orders);
+        Page<Order> orders = getOrderList();
+        when(orderService.findAll(any())).thenReturn(orders);
 
         // when
         mockMvc.perform(get("/api/v1/orders"))
@@ -99,7 +103,7 @@ public class OrderControllerTest {
         // then
         verify(orderService,
                 times(1))
-                .findAll();
+                .findAll(PAGE_NUMBER);
         verifyNoMoreInteractions(orderService);
     }
 

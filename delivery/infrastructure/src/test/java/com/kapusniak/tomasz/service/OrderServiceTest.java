@@ -6,6 +6,7 @@ import com.kapusniak.tomasz.mapper.OrderEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageSize;
 import com.kapusniak.tomasz.openapi.model.PackageType;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.OrderJpaRepository;
 import com.kapusniak.tomasz.service.model.OrderService;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -36,8 +41,11 @@ import static org.mockito.BDDMockito.*;
 @TestPropertySource(locations = "classpath:application-test.properties")
 class OrderServiceTest {
 
-    public static final UUID ORDER_UUID_1 = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
-    public static final UUID CUSTOMER_UUID = UUID.randomUUID();
+    private static final UUID ORDER_UUID_1 = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
+    private static final UUID CUSTOMER_UUID = UUID.randomUUID();
+    private static final Integer PAGE_NUMBER = 0;
+    private static final PageRequest PAGEABLE = PageRequest.of(PAGE_NUMBER, PageSize.EXTRA_SMALL.getValue());
+
 
     @Mock
     private OrderJpaRepository orderRepository;
@@ -79,14 +87,10 @@ class OrderServiceTest {
         return orderEntity;
     }
 
-    private List<Order> prepareOrderList() {
+    private Page<OrderEntity> prepareOrderEntityList() {
+        List<OrderEntity> orderEntities = List.of(prepareOrderEntity(), prepareOrderEntity());
 
-        return List.of(prepareOrder(), prepareOrder());
-    }
-
-    private List<OrderEntity> prepareOrderEntityList() {
-
-        return List.of(prepareOrderEntity(), prepareOrderEntity());
+        return new PageImpl<>(orderEntities);
 
     }
 
@@ -147,25 +151,26 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("should return list of all orders with correct size and check method invocations")
+    @DisplayName("should return page of orders with correct size and check method invocations")
     void findAll() {
 
         // given
-        List<OrderEntity> orderEntityList = prepareOrderEntityList();
-        given(orderRepository.findAll())
-                .willReturn(orderEntityList);
+        Page<OrderEntity> orderEntityPage = prepareOrderEntityList();
+
+        given(orderRepository.findAll(any(Pageable.class)))
+                .willReturn(orderEntityPage);
 
         // when
-        List<Order> allOrders = orderService.findAll();
+        Page<Order> orderPage = orderService.findAll(PAGE_NUMBER);
 
         // then
-        assertThat(allOrders.size())
+        assertThat(orderPage.getContent().size())
                 .isEqualTo(2);
 
         // verify
         then(orderRepository)
                 .should(times(1))
-                .findAll();
+                .findAll(PAGEABLE);
     }
 
     @Test
@@ -214,17 +219,23 @@ class OrderServiceTest {
     void findByPackageType() {
 
         // given
-        List<OrderEntity> orderEntityList = prepareOrderEntityList();
+        Page<OrderEntity> orderEntityList = prepareOrderEntityList();
+        PackageType packageType = DOCUMENT;
 
         // and
-        given(orderRepository.findByPackageType(any()))
+        given(orderRepository.findByPackageType(any(), any(Pageable.class)))
                 .willReturn(orderEntityList);
 
         // when
-        List<Order> ordersByPackageType = orderService.findByPackageType(DOCUMENT);
+        Page<Order> ordersByPackageType = orderService.findByPackageType(packageType, PAGE_NUMBER);
 
         // then
-        assertThat(ordersByPackageType.size()).isGreaterThan(0);
+        assertThat(ordersByPackageType.getContent().size())
+                .isGreaterThan(0);
+        // verify
+        then(orderRepository)
+                .should(times(1))
+                .findByPackageType(packageType, PAGEABLE);
     }
 
     @Test
@@ -236,7 +247,7 @@ class OrderServiceTest {
 
         // when
         Throwable throwable = catchThrowable(() ->
-                orderService.findByPackageType(packageTypeNull));
+                orderService.findByPackageType(packageTypeNull, PAGE_NUMBER));
 
         // then
         assertThat(throwable)
@@ -249,17 +260,24 @@ class OrderServiceTest {
     void findByPackageSize() {
 
         // given
-        List<OrderEntity> orderEntityList = prepareOrderEntityList();
+        Page<OrderEntity> orderEntityList = prepareOrderEntityList();
+        PackageSize packageSize = EXTRA_LARGE;
 
         // and
-        given(orderRepository.findByPackageSize(any()))
+        given(orderRepository.findByPackageSize(any(), any(Pageable.class)))
                 .willReturn(orderEntityList);
 
         // when
-        List<Order> ordersByPackageSize = orderService.findByPackageSize(EXTRA_LARGE);
+        Page<Order> ordersByPackageSize = orderService.findByPackageSize(packageSize, PAGE_NUMBER);
 
         // then
-        assertThat(ordersByPackageSize.size()).isGreaterThan(0);
+        assertThat(ordersByPackageSize.getContent().size())
+                .isGreaterThan(0);
+
+        // verify
+        then(orderRepository)
+                .should(times(1))
+                .findByPackageSize(packageSize, PAGEABLE);
     }
 
     @Test
@@ -271,7 +289,7 @@ class OrderServiceTest {
 
         // when
         Throwable throwable = catchThrowable(() ->
-                orderService.findByPackageSize(packageSizeNull));
+                orderService.findByPackageSize(packageSizeNull, PAGE_NUMBER));
 
         // then
         assertThat(throwable)
@@ -284,18 +302,24 @@ class OrderServiceTest {
     void findAllByCustomerUuid() {
 
         // given
-        List<OrderEntity> orderEntityList = prepareOrderEntityList();
+        Page<OrderEntity> orderEntityList = prepareOrderEntityList();
         UUID customerUuid = ORDER_UUID_1;
 
         // and
-        given(orderRepository.findAllByCustomerUuid(any()))
+        given(orderRepository.findAllByCustomerUuid(any(), any(Pageable.class)))
                 .willReturn(orderEntityList);
 
         // when
-        List<Order> ordersByCustomerUuid = orderService.findAllByCustomerUuid(customerUuid);
+        Page<Order> ordersByCustomerUuid = orderService.findAllByCustomerUuid(customerUuid, PAGE_NUMBER);
 
         // then
-        assertThat(ordersByCustomerUuid.size()).isGreaterThan(0);
+        assertThat(ordersByCustomerUuid.getContent().size())
+                .isGreaterThan(0);
+
+        // verify
+        then(orderRepository)
+                .should(times(1))
+                .findAllByCustomerUuid(customerUuid, PAGEABLE);
     }
 
     @Test
@@ -307,7 +331,7 @@ class OrderServiceTest {
 
         // when
         Throwable throwable = catchThrowable(() ->
-                orderService.findAllByCustomerUuid(customerUuid));
+                orderService.findAllByCustomerUuid(customerUuid, PAGE_NUMBER));
 
         // then
         assertThat(throwable)

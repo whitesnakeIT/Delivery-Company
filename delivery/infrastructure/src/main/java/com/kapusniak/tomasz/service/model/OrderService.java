@@ -96,40 +96,67 @@ public class OrderService implements BaseEntityService<OrderEntity>, BaseModelSe
         return newOrder;
     }
 
-    @Cacheable(value = "order")
-    public List<Order> findByPackageType(PackageType packageType) {
+    @Cacheable(value = "ordersByPackageType")
+    public Page<Order> findByPackageType(PackageType packageType, Integer page) {
         if (packageType == null) {
             throw new EntityNotFoundException("Searching for order failed. Package type is null.");
         }
+        Integer pageNumber = validatePage(page);
+        Page<OrderEntity> orderPage = orderRepository
+                .findByPackageType(packageType, PageRequest.of(
+                        pageNumber,
+                        PageSize.EXTRA_SMALL.getValue()));
 
-        return orderRepository
-                .findByPackageType(packageType)
-                .stream().map(orderEntityMapper::mapToApiModel)
+        List<Order> orders = orderPage
+                .getContent()
+                .stream()
+                .map(orderEntityMapper::mapToApiModel)
                 .toList();
+        Pageable pageable = PageRequest.of(page, PageSize.EXTRA_SMALL.getValue());
+
+        return new PageImpl<>(orders, pageable, orderPage.getTotalElements());
     }
 
-    @Cacheable(value = "order")
-    public List<Order> findByPackageSize(PackageSize packageSize) {
+    @Cacheable(value = "ordersByPackageSize")
+    public Page<Order> findByPackageSize(PackageSize packageSize, Integer page) {
         if (packageSize == null) {
             throw new EntityNotFoundException("Searching for order failed. Package size is null.");
         }
+        Integer pageNumber = validatePage(page);
+        Page<OrderEntity> orderPage = orderRepository
+                .findByPackageSize(packageSize, PageRequest.of(
+                        pageNumber,
+                        PageSize.EXTRA_SMALL.getValue()));
 
-        return orderRepository
-                .findByPackageSize(packageSize)
-                .stream().map(orderEntityMapper::mapToApiModel)
+        List<Order> orders = orderPage
+                .getContent()
+                .stream()
+                .map(orderEntityMapper::mapToApiModel)
                 .toList();
+        Pageable pageable = PageRequest.of(page, PageSize.EXTRA_SMALL.getValue());
+
+        return new PageImpl<>(orders, pageable, orderPage.getTotalElements());
     }
 
-    @Cacheable(value = "orders")
-    public List<Order> findAllByCustomerUuid(UUID customerUuid) {
+    @Cacheable(value = "ordersByCustomerUuid")
+    public Page<Order> findAllByCustomerUuid(UUID customerUuid, Integer page) {
         if (customerUuid == null) {
             throw new EntityNotFoundException("Searching for customer orders failed. Customer uuid is null.");
         }
+        Integer pageNumber = validatePage(page);
+        Page<OrderEntity> orderPage = orderRepository
+                .findAllByCustomerUuid(customerUuid, PageRequest.of(
+                        pageNumber,
+                        PageSize.EXTRA_SMALL.getValue()));
 
-        return orderRepository
-                .findAllByCustomerUuid(customerUuid)
-                .stream().map(orderEntityMapper::mapToApiModel)
+        List<Order> orders = orderPage
+                .getContent()
+                .stream()
+                .map(orderEntityMapper::mapToApiModel)
                 .toList();
+        Pageable pageable = PageRequest.of(page, PageSize.EXTRA_SMALL.getValue());
+
+        return new PageImpl<>(orders, pageable, orderPage.getTotalElements());
     }
 
     @Override
