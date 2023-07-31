@@ -2,14 +2,12 @@ package com.kapusniak.tomasz.controller;
 
 import com.kapusniak.tomasz.openapi.api.CouriersApi;
 import com.kapusniak.tomasz.openapi.model.Courier;
-import com.kapusniak.tomasz.service.CourierService;
+import com.kapusniak.tomasz.service.model.CourierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,10 @@ public class CourierController implements CouriersApi {
     }
 
     @Override
-    public ResponseEntity<List<Courier>> getAllCouriers() {
-        List<Courier> courierList = courierService.findAll();
+    public ResponseEntity<List<Courier>> getAllCouriers(@RequestParam(defaultValue = "0") Integer pageNumber) {
+        Page<Courier> courierList = courierService.findAll(pageNumber);
 
-        return ResponseEntity.ok(courierList);
+        return ResponseEntity.ok(courierList.getContent());
     }
 
     @Override

@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>18</java.version>
-        <spring.boot.version>3.0.0</spring.boot.version>
+        <spring.boot.version>3.1.0</spring.boot.version>
         <maven-compiler-plugin.source>17</maven-compiler-plugin.source>
         <maven-compiler-plugin.target>17</maven-compiler-plugin.target>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>

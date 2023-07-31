@@ -2,13 +2,15 @@ package com.kapusniak.tomasz.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Tracking;
-import com.kapusniak.tomasz.service.TrackingService;
+import com.kapusniak.tomasz.service.model.TrackingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(authorities = "ADMIN")
 public class TrackingControllerTest {
 
+    private static final Integer PAGE_NUMBER = 0;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -47,7 +50,7 @@ public class TrackingControllerTest {
         return tracking1;
     }
 
-    public List<Tracking> getTrackingList() {
+    public Page<Tracking> getTrackingList() {
         List<Tracking> trackingList = new ArrayList<>();
         Tracking tracking1 = new Tracking();
         tracking1.setId(1L);
@@ -58,15 +61,15 @@ public class TrackingControllerTest {
         trackingList.add(tracking1);
         trackingList.add(tracking2);
 
-        return trackingList;
+        return new PageImpl<>(trackingList);
     }
 
     @Test
     @DisplayName("should correctly return list of tracking")
     public void getAllTracking() throws Exception {
         // given
-        List<Tracking> trackingList = getTrackingList();
-        when(trackingService.findAll()).thenReturn(trackingList);
+        Page<Tracking> trackingList = getTrackingList();
+        when(trackingService.findAll(any())).thenReturn(trackingList);
 
         // when
         mockMvc.perform(get("/api/v1/tracking"))
@@ -80,7 +83,7 @@ public class TrackingControllerTest {
         // then
         verify(trackingService,
                 times(1))
-                .findAll();
+                .findAll(PAGE_NUMBER);
         verifyNoMoreInteractions(trackingService);
     }
 

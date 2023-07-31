@@ -2,7 +2,7 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.openapi.model.Order;
-import com.kapusniak.tomasz.service.CustomerService;
+import com.kapusniak.tomasz.service.model.CustomerService;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 

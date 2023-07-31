@@ -3,13 +3,15 @@ package com.kapusniak.tomasz.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Courier;
 import com.kapusniak.tomasz.openapi.model.CourierCompany;
-import com.kapusniak.tomasz.service.CourierService;
+import com.kapusniak.tomasz.service.model.CourierService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CourierControllerTest {
+
+    private static final Integer PAGE_NUMBER = 0;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -49,7 +53,7 @@ public class CourierControllerTest {
         return courier1;
     }
 
-    public List<Courier> getCourierList() {
+    public Page<Courier> getCourierList() {
         List<Courier> couriers = new ArrayList<>();
         Courier courier1 = new Courier();
         courier1.setId(1L);
@@ -60,15 +64,15 @@ public class CourierControllerTest {
         couriers.add(courier1);
         couriers.add(courier2);
 
-        return couriers;
+        return new PageImpl<>(couriers);
     }
 
     @Test
     @DisplayName("should correctly return list of couriers")
     public void getAllCouriers() throws Exception {
         // given
-        List<Courier> couriers = getCourierList();
-        when(courierService.findAll()).thenReturn(couriers);
+        Page<Courier> couriers = getCourierList();
+        when(courierService.findAll(any())).thenReturn(couriers);
 
         // when
         mockMvc.perform(get("/api/v1/couriers"))
@@ -82,7 +86,7 @@ public class CourierControllerTest {
         // then
         verify(courierService,
                 times(1))
-                .findAll();
+                .findAll(PAGE_NUMBER);
         verifyNoMoreInteractions(courierService);
     }
 

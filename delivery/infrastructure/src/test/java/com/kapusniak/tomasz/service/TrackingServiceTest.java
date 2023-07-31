@@ -3,7 +3,9 @@ package com.kapusniak.tomasz.service;
 import com.kapusniak.tomasz.entity.TrackingEntity;
 import com.kapusniak.tomasz.mapper.TrackingEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Tracking;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.TrackingJpaRepository;
+import com.kapusniak.tomasz.service.model.TrackingService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -28,6 +34,9 @@ import static org.mockito.Mockito.times;
 class TrackingServiceTest {
 
     private static final UUID TRACKING_UUID_1 = UUID.fromString("97e37668-b355-4ecd-83be-dbc9cf56d8c0");
+    private static final Integer PAGE_NUMBER = PageSize.EXTRA_SMALL.getValue();
+    private static final PageRequest PAGEABLE = PageRequest.of(PAGE_NUMBER, PageSize.EXTRA_SMALL.getValue());
+
     @Mock
     private TrackingJpaRepository trackingRepository;
     @Mock
@@ -60,9 +69,10 @@ class TrackingServiceTest {
         return List.of(prepareTracking(), prepareTracking());
     }
 
-    private List<TrackingEntity> prepareTrackingEntityList() {
+    private Page<TrackingEntity> prepareTrackingEntityPage() {
+        List<TrackingEntity> trackingEntityList = List.of(prepareTrackingEntity(), prepareTrackingEntity());
 
-        return List.of(prepareTrackingEntity(), prepareTrackingEntity());
+        return new PageImpl<>(trackingEntityList);
     }
 
     @BeforeEach
@@ -123,26 +133,26 @@ class TrackingServiceTest {
     }
 
     @Test
-    @DisplayName("should return list of all tracking with correct size and check method invocations")
+    @DisplayName("should return page of tracking with correct size and check method invocations")
     void findAll() {
 
         // given
-        List<TrackingEntity> trackingEntityList = prepareTrackingEntityList();
+        Page<TrackingEntity> trackingEntityList = prepareTrackingEntityPage();
 
-        given(trackingRepository.findAll())
+        given(trackingRepository.findAll(any(Pageable.class)))
                 .willReturn(trackingEntityList);
 
         // when
-        List<Tracking> allTracking = trackingService.findAll();
+        Page<Tracking> trackingPage = trackingService.findAll(PAGE_NUMBER);
 
         // then
-        assertThat(allTracking.size())
+        assertThat(trackingPage.getContent().size())
                 .isEqualTo(2);
 
         // verify
         then(trackingRepository)
                 .should(times(1))
-                .findAll();
+                .findAll(PAGEABLE);
     }
 
     @Test

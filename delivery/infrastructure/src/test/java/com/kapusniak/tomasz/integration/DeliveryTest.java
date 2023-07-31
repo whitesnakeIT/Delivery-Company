@@ -3,13 +3,14 @@ package com.kapusniak.tomasz.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
-import com.kapusniak.tomasz.service.DeliveryService;
+import com.kapusniak.tomasz.service.model.DeliveryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -24,7 +25,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.UUID;
 
 import static com.kapusniak.tomasz.openapi.model.DeliveryStatus.IN_TRANSIT;
@@ -47,6 +47,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 @WithMockUser(authorities = "ADMIN")
 public class DeliveryTest {
+
+    private static final Integer PAGE_NUMBER = 0;
 
     private static final UUID DELIVERY_UUID_1 = UUID.fromString("31822712-94b3-43ed-9aac-24613948ca79");
     private static final UUID ORDER_UUID = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
@@ -143,11 +145,11 @@ public class DeliveryTest {
     }
 
     @Test
-    @DisplayName("should correctly return list Deliveries from database after executing" +
+    @DisplayName("should correctly return page Deliveries from database after executing" +
             " method from controller")
     void getAllDeliveries() throws Exception {
         // given
-        List<Delivery> deliveryList = deliveryService.findAll();
+        Page<Delivery> deliveryPage = deliveryService.findAll(PAGE_NUMBER);
 
         // when
         ResultActions result =
@@ -159,9 +161,9 @@ public class DeliveryTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].uuid")
-                        .value(deliveryList.get(0).getUuid().toString()))
+                        .value(deliveryPage.getContent().get(0).getUuid().toString()))
                 .andExpect(jsonPath("$[1].uuid")
-                        .value(deliveryList.get(1).getUuid().toString()));
+                        .value(deliveryPage.getContent().get(1).getUuid().toString()));
     }
 
     @Sql("classpath:integration-test-scripts/cleanup.sql")
@@ -207,7 +209,7 @@ public class DeliveryTest {
     void deleteDeliveryExisting() throws Exception {
         // given
         UUID deliveryUuid = DELIVERY_UUID_1;
-        int sizeBeforeDeleting = deliveryService.findAll().size();
+        int sizeBeforeDeleting = deliveryService.findAll(PAGE_NUMBER).getContent().size();
 
         // when
         ResultActions result =
@@ -218,7 +220,7 @@ public class DeliveryTest {
         result.andExpect(status().isNoContent());
 
         // and
-        int sizeAfterDeleting = deliveryService.findAll().size();
+        int sizeAfterDeleting = deliveryService.findAll(PAGE_NUMBER).getContent().size();
         assertThat(sizeAfterDeleting).isEqualTo(sizeBeforeDeleting - 1);
 
     }

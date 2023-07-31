@@ -3,14 +3,15 @@ package com.kapusniak.tomasz.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Order;
 import com.kapusniak.tomasz.openapi.model.PackageType;
-import com.kapusniak.tomasz.service.CustomerService;
-import com.kapusniak.tomasz.service.OrderService;
+import com.kapusniak.tomasz.service.model.CustomerService;
+import com.kapusniak.tomasz.service.model.OrderService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -23,7 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import static com.kapusniak.tomasz.openapi.model.PackageSize.LARGE;
@@ -48,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(authorities = "ADMIN")
 public class OrderTest {
 
+    private static final Integer PAGE_NUMBER = 0;
     private static final UUID ORDER_UUID_1 = UUID.fromString("29755321-c483-4a12-9f64-30a132038b70");
     private static final UUID CUSTOMER_UUID_1 = UUID.fromString("28f60dc1-993a-4d08-ac54-850a1fefb6a3");
 
@@ -139,11 +140,11 @@ public class OrderTest {
     }
 
     @Test
-    @DisplayName("should correctly return list Orders from database after executing" +
+    @DisplayName("should correctly return page Orders from database after executing" +
             " method from controller")
     void getAllOrders() throws Exception {
         // given
-        List<Order> orderList = orderService.findAll();
+        Page<Order> orderPage = orderService.findAll(PAGE_NUMBER);
 
         // when
         ResultActions result =
@@ -155,9 +156,9 @@ public class OrderTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].uuid")
-                        .value(orderList.get(0).getUuid().toString()))
+                        .value(orderPage.getContent().get(0).getUuid().toString()))
                 .andExpect(jsonPath("$[1].uuid")
-                        .value(orderList.get(1).getUuid().toString()));
+                        .value(orderPage.getContent().get(1).getUuid().toString()));
 
 
     }
@@ -204,7 +205,7 @@ public class OrderTest {
     void deleteOrderExisting() throws Exception {
         // given
         UUID orderUuid = ORDER_UUID_1;
-        int sizeBeforeDeleting = orderService.findAll().size();
+        int sizeBeforeDeleting = orderService.findAll(PAGE_NUMBER).getContent().size();
 
         // when
         ResultActions result =
@@ -215,7 +216,7 @@ public class OrderTest {
         result.andExpect(status().isNoContent());
 
         // and
-        int sizeAfterDeleting = orderService.findAll().size();
+        int sizeAfterDeleting = orderService.findAll(PAGE_NUMBER).getContent().size();
         assertThat(sizeAfterDeleting).isEqualTo(sizeBeforeDeleting - 1);
 
     }

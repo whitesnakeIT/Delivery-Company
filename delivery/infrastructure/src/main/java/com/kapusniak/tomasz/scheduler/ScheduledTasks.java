@@ -2,7 +2,7 @@ package com.kapusniak.tomasz.scheduler;
 
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
-import com.kapusniak.tomasz.service.DeliveryService;
+import com.kapusniak.tomasz.service.model.DeliveryService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

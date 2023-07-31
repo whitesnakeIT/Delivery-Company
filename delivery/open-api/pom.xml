@@ -79,10 +79,7 @@
                                 <useSpringController>true</useSpringController>
                                 <serializableModel>true</serializableModel>
                             </configOptions>
-                            <!--                            <typeMappings>-->
-                            <!--                                <typeMapping>Double=java.math.BigDecimal</typeMapping>-->
-                            <!--                                <typeMapping>Offset=java.time.LocalDateTime</typeMapping>-->
-                            <!--                            </typeMappings>-->
+
                         </configuration>
                     </execution>
                 </executions>

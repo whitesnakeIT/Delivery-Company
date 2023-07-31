@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -19,7 +21,6 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import static com.kapusniak.tomasz.openapi.model.PackageSize.LARGE;
@@ -42,6 +43,9 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
         )
 )
 class OrderJpaRepositoryTest {
+
+    private static final Integer PAGE_NUMBER = 0;
+    private static final PageRequest PAGEABLE = PageRequest.of(PAGE_NUMBER, PageSize.EXTRA_SMALL.getValue());
 
     @Autowired
     private OrderJpaRepository orderRepository;
@@ -75,14 +79,14 @@ class OrderJpaRepositoryTest {
     }
 
     @Test
-    @DisplayName("should return list of orders with correct size based on package type")
+    @DisplayName("should return page of orders with correct size based on package type")
     void findByPackageType() {
 
         //when
-        List<OrderEntity> ordersByPackageType = orderRepository.findByPackageType(PackageType.DOCUMENT);
+        Page<OrderEntity> ordersByPackageType = orderRepository.findByPackageType(PackageType.DOCUMENT, PAGEABLE);
 
         //then
-        then(ordersByPackageType.size())
+        then(ordersByPackageType.getContent().size())
                 .isGreaterThan(0);
 
         then(ordersByPackageType)
@@ -91,7 +95,7 @@ class OrderJpaRepositoryTest {
     }
 
     @Test
-    @DisplayName("should return empty list of orders based on package type")
+    @DisplayName("should return empty page of orders based on package type")
     void findByPackageTypeEmpty() {
 
         // given
@@ -99,22 +103,22 @@ class OrderJpaRepositoryTest {
         orderRepository.deleteAll();
 
         // when
-        List<OrderEntity> ordersByPackageType = orderRepository.findByPackageType(PackageType.DOCUMENT);
+        Page<OrderEntity> ordersByPackageType = orderRepository.findByPackageType(PackageType.DOCUMENT, PAGEABLE);
 
         // then
-        then(ordersByPackageType)
+        then(ordersByPackageType.getContent())
                 .isEmpty();
     }
 
     @Test
-    @DisplayName("should return list of orders with correct size based on package size")
+    @DisplayName("should return page of orders with correct size based on package size")
     void findByPackageSize() {
 
         //when
-        List<OrderEntity> ordersByPackageSize = orderRepository.findByPackageSize(PackageSize.SMALL);
+        Page<OrderEntity> ordersByPackageSize = orderRepository.findByPackageSize(PackageSize.SMALL, PAGEABLE);
 
         //then
-        then(ordersByPackageSize.size())
+        then(ordersByPackageSize.getContent().size())
                 .isGreaterThan(0);
 
         then(ordersByPackageSize)
@@ -123,7 +127,7 @@ class OrderJpaRepositoryTest {
     }
 
     @Test
-    @DisplayName("should return empty list of orders based on package size")
+    @DisplayName("should return empty page of orders based on package size")
     void findByPackageSizeEmpty() {
 
         // given
@@ -131,7 +135,7 @@ class OrderJpaRepositoryTest {
         orderRepository.deleteAll();
 
         // when
-        List<OrderEntity> ordersByPackageSize = orderRepository.findByPackageSize(PackageSize.EXTRA_LARGE);
+        Page<OrderEntity> ordersByPackageSize = orderRepository.findByPackageSize(PackageSize.EXTRA_LARGE, PAGEABLE);
 
         // then
         then(ordersByPackageSize)
@@ -139,21 +143,21 @@ class OrderJpaRepositoryTest {
     }
 
     @Test
-    @DisplayName("should return list of orders with correct size based on customer uuid")
+    @DisplayName("should return page of orders with correct size based on customer uuid")
     void findAllByCustomerUuidExisting() {
         // given
         CustomerEntity customerEntity = prepareCustomerEntity();
 
         // when
-        List<OrderEntity> ordersByCustomerUuid = orderRepository.findAllByCustomerUuid(customerEntity.getUuid());
+        Page<OrderEntity> ordersByCustomerUuid = orderRepository.findAllByCustomerUuid(customerEntity.getUuid(), PAGEABLE);
 
         // then
-        then(ordersByCustomerUuid.size())
+        then(ordersByCustomerUuid.getContent().size())
                 .isGreaterThan(0);
     }
 
     @Test
-    @DisplayName("should return empty list of orders based on customer uuid")
+    @DisplayName("should return empty page of orders based on customer uuid")
     void findAllByCustomerUuidNotExisting() {
 
         // given
@@ -164,7 +168,7 @@ class OrderJpaRepositoryTest {
         CustomerEntity customerEntity = prepareCustomerEntity();
 
         // when
-        List<OrderEntity> ordersByCustomerUuid = orderRepository.findAllByCustomerUuid(customerEntity.getUuid());
+        Page<OrderEntity> ordersByCustomerUuid = orderRepository.findAllByCustomerUuid(customerEntity.getUuid(), PAGEABLE);
 
         // then
         then(ordersByCustomerUuid)

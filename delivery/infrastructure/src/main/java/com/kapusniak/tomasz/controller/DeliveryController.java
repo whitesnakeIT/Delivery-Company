@@ -2,14 +2,12 @@ package com.kapusniak.tomasz.controller;
 
 import com.kapusniak.tomasz.openapi.api.DeliveriesApi;
 import com.kapusniak.tomasz.openapi.model.Delivery;
-import com.kapusniak.tomasz.service.DeliveryService;
+import com.kapusniak.tomasz.service.model.DeliveryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,10 @@ public class DeliveryController implements DeliveriesApi {
     }
 
     @Override
-    public ResponseEntity<List<Delivery>> getAllDeliveries() {
-        List<Delivery> deliveryList = deliveryService.findAll();
+    public ResponseEntity<List<Delivery>> getAllDeliveries(@RequestParam(defaultValue = "0") Integer pageNumber) {
+        Page<Delivery> deliveryList = deliveryService.findAll(pageNumber);
 
-        return ResponseEntity.ok(deliveryList);
+        return ResponseEntity.ok(deliveryList.getContent());
     }
 
     @Override

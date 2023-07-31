@@ -6,7 +6,9 @@ import com.kapusniak.tomasz.entity.OrderEntity;
 import com.kapusniak.tomasz.mapper.DeliveryEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
+import com.kapusniak.tomasz.service.model.DeliveryService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -38,6 +44,9 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 class DeliveryServiceTest {
     private static final UUID DELIVERY_UUID_1 = UUID.fromString("fe362772-17c3-4547-b559-ceb13e164e6f");
+    private static final Integer PAGE_NUMBER = 0;
+    private static final PageRequest PAGEABLE = PageRequest.of(PAGE_NUMBER, PageSize.EXTRA_SMALL.getValue());
+
     @Mock
     private DeliveryJpaRepository deliveryRepository;
 
@@ -72,17 +81,13 @@ class DeliveryServiceTest {
         return deliveryEntity;
     }
 
-    private List<Delivery> prepareDeliveryList() {
+    private Page<DeliveryEntity> prepareDeliveryEntityList() {
+        List<DeliveryEntity> deliveryEntities = List.of(prepareDeliveryEntity(), prepareDeliveryEntity());
 
-        return List.of(prepareDelivery(), prepareDelivery());
+        return new PageImpl<>(deliveryEntities);
     }
-
-    private List<DeliveryEntity> prepareDeliveryEntityList() {
-
-        return List.of(prepareDeliveryEntity(), prepareDeliveryEntity());
-    }
-
     @BeforeEach
+
     void setup() {
 
         when(deliveryEntityMapper
@@ -140,27 +145,27 @@ class DeliveryServiceTest {
     }
 
     @Test
-    @DisplayName("should return list of all delivery with correct size and check method invocations")
+    @DisplayName("should return page of delivery with correct size and check method invocations")
     void findAll() {
 
         // given
-        List<DeliveryEntity> deliveryEntityList = prepareDeliveryEntityList();
+        Page<DeliveryEntity> deliveryEntityPage = prepareDeliveryEntityList();
 
         // and
-        given(deliveryRepository.findAll())
-                .willReturn(deliveryEntityList);
+        given(deliveryRepository.findAll(any(Pageable.class)))
+                .willReturn(deliveryEntityPage);
 
         // when
-        List<Delivery> allDelivery = deliveryService.findAll();
+        Page<Delivery> deliveryPage = deliveryService.findAll(PAGE_NUMBER);
 
         // then
-        assertThat(allDelivery.size())
+        assertThat(deliveryPage.getContent().size())
                 .isEqualTo(2);
 
         // verify
         then(deliveryRepository)
                 .should(times(1))
-                .findAll();
+                .findAll(PAGEABLE);
     }
 
     @Test

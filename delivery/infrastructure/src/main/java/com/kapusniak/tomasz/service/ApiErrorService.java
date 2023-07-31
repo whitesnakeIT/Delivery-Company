@@ -1,5 +1,7 @@
-package com.kapusniak.tomasz.handler;
+package com.kapusniak.tomasz.service;
 
+import com.kapusniak.tomasz.file.exception.FileStorageException;
+import com.kapusniak.tomasz.file.exception.MyFileNotFoundException;
 import com.kapusniak.tomasz.openapi.model.ApiError;
 import com.kapusniak.tomasz.openapi.model.ApiSubError;
 import jakarta.persistence.EntityNotFoundException;
@@ -67,6 +69,19 @@ public class ApiErrorService {
         ApiError apiError = buildApiError(ex);
 
         return apiError;
+    }
 
+    public ApiError createApiError(MyFileNotFoundException ex) {
+        ApiError apiError = buildApiError(ex);
+        apiError.setHttpStatus(HttpStatus.NOT_FOUND.value());
+
+        return apiError;
+    }
+
+    public ApiError createApiError(FileStorageException ex) {
+        ApiError apiError = buildApiError(ex);
+        apiError.setHttpStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        return apiError;
     }
 }

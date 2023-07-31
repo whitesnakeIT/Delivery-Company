@@ -76,6 +76,14 @@ services:
       - "5435:5434"
     volumes:
       - keycloak-db-data:/var/lib/postgresql/data
+  activeMQ:
+    image: webcenter/activemq:latest
+    container_name: activeMQ
+    ports:
+      #     - "6160:6160"
+      - "61616:61616"
+      - "8161:8161"
+
 volumes:
   redis-data:
   keycloak-data:

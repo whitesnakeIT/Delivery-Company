@@ -2,13 +2,15 @@ package com.kapusniak.tomasz.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapusniak.tomasz.openapi.model.Customer;
-import com.kapusniak.tomasz.service.CustomerService;
+import com.kapusniak.tomasz.service.model.CustomerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CustomerControllerTest {
+    private static final Integer PAGE_NUMBER = 0;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -47,7 +50,7 @@ public class CustomerControllerTest {
         return customer1;
     }
 
-    public List<Customer> getCustomerList() {
+    public Page<Customer> getCustomerList() {
         List<Customer> customers = new ArrayList<>();
         Customer customer1 = new Customer();
         customer1.setId(1L);
@@ -59,15 +62,15 @@ public class CustomerControllerTest {
         customers.add(customer1);
         customers.add(customer2);
 
-        return customers;
+        return new PageImpl<>(customers);
     }
 
     @Test
     @DisplayName("should correctly return list of customers")
     public void getAllCustomers() throws Exception {
         // given
-        List<Customer> customers = getCustomerList();
-        when(customerService.findAll())
+        Page<Customer> customers = getCustomerList();
+        when(customerService.findAll(any()))
                 .thenReturn(customers);
 
         // when
@@ -82,7 +85,7 @@ public class CustomerControllerTest {
         // then
         verify(customerService,
                 times(1))
-                .findAll();
+                .findAll(PAGE_NUMBER);
         verifyNoMoreInteractions(customerService);
     }
 

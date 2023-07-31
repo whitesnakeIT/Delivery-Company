@@ -2,14 +2,12 @@ package com.kapusniak.tomasz.controller;
 
 import com.kapusniak.tomasz.openapi.api.TrackingApi;
 import com.kapusniak.tomasz.openapi.model.Tracking;
-import com.kapusniak.tomasz.service.TrackingService;
+import com.kapusniak.tomasz.service.model.TrackingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,10 +36,10 @@ public class TrackingController implements TrackingApi {
     }
 
     @Override
-    public ResponseEntity<List<Tracking>> getAllTracking() {
-        List<Tracking> trackingList = trackingService.findAll();
+    public ResponseEntity<List<Tracking>> getAllTracking(@RequestParam(defaultValue = "0") Integer pageNumber) {
+        Page<Tracking> trackingList = trackingService.findAll(pageNumber);
 
-        return ResponseEntity.ok(trackingList);
+        return ResponseEntity.ok(trackingList.getContent());
     }
 
     @Override

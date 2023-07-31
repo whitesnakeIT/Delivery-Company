@@ -1,15 +1,21 @@
-package com.kapusniak.tomasz.service;
+package com.kapusniak.tomasz.service.model;
 
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.mapper.DeliveryEntityMapper;
 import com.kapusniak.tomasz.openapi.model.Delivery;
 import com.kapusniak.tomasz.openapi.model.DeliveryStatus;
+import com.kapusniak.tomasz.repository.PageSize;
 import com.kapusniak.tomasz.repository.jpa.DeliveryJpaRepository;
+import com.kapusniak.tomasz.service.BaseEntityService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,14 +26,15 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class DeliveryService implements BaseEntityService<DeliveryEntity> {
+public class DeliveryService implements BaseEntityService<DeliveryEntity>, BaseModelService<Delivery> {
 
     private final DeliveryJpaRepository deliveryRepository;
 
     private final DeliveryEntityMapper deliveryEntityMapper;
 
+    @Override
     @Transactional
-    @CachePut(value = "deliveries", key = "#delivery.uuid")
+    @CachePut(value = "delivery", key = "#delivery.uuid")
     public Delivery save(Delivery delivery) {
         if (delivery == null) {
             throw new IllegalArgumentException("Saving delivery failed. Delivery is null.");
@@ -38,16 +45,8 @@ public class DeliveryService implements BaseEntityService<DeliveryEntity> {
         return deliveryEntityMapper.mapToApiModel(savedEntity);
     }
 
-    @Cacheable(value = "deliveries")
-    public List<Delivery> findAll() {
-        return deliveryRepository
-                .findAll()
-                .stream()
-                .map(deliveryEntityMapper::mapToApiModel)
-                .toList();
-    }
-
-    @Cacheable(value = "deliveries", key = "#deliveryUuid")
+    @Override
+    @Cacheable(value = "delivery", key = "#deliveryUuid")
     public Delivery findByUuid(UUID deliveryUuid) {
         if (deliveryUuid == null) {
             throw new EntityNotFoundException("Searching for delivery failed. Delivery uuid is null.");
@@ -57,6 +56,7 @@ public class DeliveryService implements BaseEntityService<DeliveryEntity> {
                         new EntityNotFoundException("Searching for delivery failed. Unrecognized uuid " + deliveryUuid)));
     }
 
+    @Override
     @Transactional
     @CacheEvict(value = "delivery", key = "#deliveryUuid")
     public void delete(UUID deliveryUuid) {
@@ -68,8 +68,9 @@ public class DeliveryService implements BaseEntityService<DeliveryEntity> {
         deliveryRepository.delete(deliveryEntityMapper.mapToEntity(delivery));
     }
 
+    @Override
     @Transactional
-    @CachePut(value = "deliveries", key = "#uuid")
+    @CachePut(value = "delivery", key = "#uuid")
     public Delivery update(UUID uuid, Delivery delivery) {
         if (uuid == null) {
             throw new IllegalArgumentException("Updating delivery failed. Delivery uuid is null.");
@@ -134,4 +135,21 @@ public class DeliveryService implements BaseEntityService<DeliveryEntity> {
         return deliveryRepository.findAllByUuidIn(uuidList);
     }
 
+    @Override
+    @Cacheable(value = "deliveries")
+    public Page<Delivery> findAll(Integer page) {
+        Integer pageNumber = validatePage(page);
+        Page<DeliveryEntity> deliveryPage = deliveryRepository
+                .findAll(PageRequest.of(
+                        pageNumber,
+                        PageSize.EXTRA_SMALL.getValue()));
+        List<Delivery> deliveries = deliveryPage
+                .getContent()
+                .stream()
+                .map(deliveryEntityMapper::mapToApiModel)
+                .toList();
+        Pageable pageable = PageRequest.of(page, PageSize.EXTRA_SMALL.getValue());
+
+        return new PageImpl<>(deliveries, pageable, deliveryPage.getTotalElements());
+    }
 }

@@ -2,8 +2,8 @@ package com.kapusniak.tomasz.mapper;
 
 import com.kapusniak.tomasz.entity.DeliveryEntity;
 import com.kapusniak.tomasz.openapi.model.Delivery;
-import com.kapusniak.tomasz.service.CourierService;
-import com.kapusniak.tomasz.service.OrderService;
+import com.kapusniak.tomasz.service.model.CourierService;
+import com.kapusniak.tomasz.service.model.OrderService;
 import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
